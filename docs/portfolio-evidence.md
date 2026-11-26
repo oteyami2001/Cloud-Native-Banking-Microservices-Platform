@@ -50,6 +50,9 @@ Redact account IDs and other identifiers before publishing.
 
 | deploy-services #1 | [45904772462](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45904772462) | 10 artifacts verified (SHA-256 + attestations), 10 versions published, aliases moved, then **automatic rollback** of all aliases (T27 mechanism exercised). Cause: alarm-based health check counted errors from the placeholder code still being invoked by schedules. Fix: health check now uses Lambda `Errors` per new `ExecutedVersion` |
 
+| deploy-services #2 | deploy-services run #2 @ 27aeb6a | **Success**: 10 services deployed (versions 1 → 3), per-version error check clean, offline integration tests passed |
+| Live unauthenticated checks (`scripts/live_smoke.py`) | 2026-11-26 | 8/8 requests to 4 protected routes returned 401 (no token and forged `alg: none` token) — **T03 verified live** |
+
 Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 
 Not yet available: service deployment run IDs, live AWS results, measured latency,

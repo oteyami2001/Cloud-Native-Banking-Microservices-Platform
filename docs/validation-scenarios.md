@@ -9,7 +9,7 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 |---|---|---|---|---|---|
 | T01 | Customer registration succeeds | `test_banking_flow::test_customer_registration_succeeds` | ✅ | ✅ 45889062755 | ☐ |
 | T02 | Valid authentication succeeds | `test_authenticated_customer_can_use_api` (claims simulated; Cognito login needs live) | ✅ (simulated) | ✅ 45889062755 | ☐ |
-| T03 | Invalid/expired JWT rejected | `test_invalid_or_expired_tokens_are_rejected` ×5; `scripts/live_smoke.py` | ✅ | ✅ 45889062755 | ☐ |
+| T03 | Invalid/expired JWT rejected | `test_invalid_or_expired_tokens_are_rejected` ×5; `scripts/live_smoke.py` | ✅ | ✅ 45889062755 | ✅ 2026-11-26 (8/8 → 401) |
 | T04 | No access to another customer's account | `test_customer_cannot_access_another_customers_account` | ✅ | ✅ 45889062755 | ☐ |
 | T05 | Account creation | `test_account_creation_with_documented_opening_balance` | ✅ | ✅ 45889062755 | ☐ |
 | T06 | Balance retrieval | `test_balance_retrieval` | ✅ | ✅ 45889062755 | ☐ |
@@ -33,10 +33,10 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T24 | Unauthorized IAM operation denied | Static IAM tests (`test_terraform_static.py`); live `AccessDenied` check pending | ◐ static | ☐ | ☐ |
 | T25 | Insecure Terraform blocked | Checkov fails `tests/terraform/fixtures/insecure` (21 failed checks, run locally) | ✅ (local tool) | ✅ 45889062736 | ☐ |
 | T26 | Unapproved deployment prevented | Workflow structure tests; requires GitHub environment protection rules | ◐ static | ☐ | ☐ |
-| T27 | Failed release rolled back | `scripts/deploy_lambda.py` rollback path; needs live run | ☐ | ☐ | ☐ |
+| T27 | Failed release rolled back | `scripts/deploy_lambda.py` rollback path + `tests/unit/test_deploy_script.py` | ✅ | ✅ | ✅ deploy-services 45904772462: release judged unhealthy → all 10 aliases rolled back automatically (trigger was a false positive, since fixed) |
 | T28 | Drift detected | `drift-detection.yml`; needs live state | ☐ | ☐ | ☐ |
 | T29 | Restore + reconciliation tested | `runbooks/database-recovery.md`; needs live PITR | ☐ | ☐ | ☐ |
 | T30 | Project resources cleaned up | `cleanup.yml` + `scripts/verify_cleanup.sh`; needs live | ☐ | ☐ | ☐ |
 
 **Offline status: 23 verified, 2 partially (static), 1 verified with a local tool, 4 require AWS.**
-**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. No scenario has yet been verified in live AWS.
+**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T03 and T27 verified (2026-11-26); remaining live scenarios pending.
