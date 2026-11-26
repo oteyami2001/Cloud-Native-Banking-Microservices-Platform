@@ -18,7 +18,8 @@ Platform, and Security & Compliance projects).
 |---|---|
 | Phases 0–6 (design, local foundation, ledger, APIs, fraud/events, frontend) | ✅ complete offline |
 | Terraform, CI/CD workflows, observability (Phases 7/9/10 code) | ✅ written and tested offline — **not applied** |
-| AWS deployment (Phase 8+) | ⏸ awaiting account confirmation and approval |
+| Phase 7 bootstrap (state + artifact buckets, GitHub OIDC roles) | ✅ applied 2026-11-26, verified 12/12 |
+| AWS workload deployment (Phase 8+) | ⏸ awaiting GitHub environment setup and approval |
 
 See the [Phase 0–6 report](docs/phase-reports/phase-00-06-report.md) and the
 [validation register](docs/validation-scenarios.md) (23/30 scenarios verified offline).

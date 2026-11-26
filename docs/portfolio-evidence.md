@@ -19,5 +19,16 @@ Redact account IDs and other identifiers before publishing.
 | Browser walkthrough (Playwright, Chromium) | register → open checking ($4,850 opening journal) + savings → $250 transfer COMPLETED → $4,000 transfer COMPLETED → combined balance still $4,850.00 → history and 5 notifications shown; reviewer queue reachable | `make local-api`, `npm run dev`, scripted walkthrough |
 | Concurrency demo | 10×$300 from $1,000 → 3 posted, 7 rejected, balance $100.00 | `python scripts/simulate_failure.py concurrent-overdraw` |
 
+## 2026-11-26 — Phase 7 bootstrap applied (owner-approved, AWS CloudShell)
+| Evidence | Value |
+|---|---|
+| Pre-flight | Discovery + SCP simulation: region-conditioned SCP, 0 denials in us-east-2 ([aws-discovery.md](aws-discovery.md)) |
+| Plan review | First plan rejected in review: PR-reachable plan role could write state and read all S3 objects; fixed (`d63383f`) and re-planned |
+| `terraform apply` | `Apply complete! Resources: 25 added, 0 changed, 0 destroyed.` (Terraform 1.13.4, AWS provider 6.70.0) |
+| Reused | Existing GitHub OIDC provider (not duplicated) |
+| `scripts/verify_bootstrap.sh` | 12/12 PASS — both buckets exist, versioned, encrypted, public access blocked; roles plan/apply/deploy/cleanup exist |
+| Bootstrap state | Backed up to `s3://novabank-tfstate-…/novabank/bootstrap/terraform.tfstate` (SSE-KMS) |
+| Workload resources | None yet (Phase 8 pending) |
+
 Not yet available: GitHub Actions run IDs, live AWS results, measured latency,
 measured RTO/RPO, actual costs.
