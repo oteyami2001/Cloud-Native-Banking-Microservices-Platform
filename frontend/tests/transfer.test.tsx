@@ -32,6 +32,8 @@ describe("App", () => {
       </MemoryRouter>,
     );
     expect(screen.getByRole("note")).toHaveTextContent(/synthetic/i);
-    expect(screen.getByText(/Choose a sandbox persona/)).toBeInTheDocument();
+    // Unauthenticated users are sent to the login page; its wording depends on
+    // the build's auth mode (offline personas locally, Cognito when deployed).
+    expect(screen.getByRole("heading", { name: /Choose a sandbox persona|^Sign in$/ })).toBeInTheDocument();
   });
 });
