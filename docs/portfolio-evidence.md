@@ -15,6 +15,8 @@ Redact account IDs and other identifiers before publishing.
 | zizmor / actionlint | 0 low+ findings / 0 findings | see security-model.md |
 | Reproducible build | identical SHA-256 across two builds | `make build` twice |
 | Local demo | $250 transfer conserved $4,850.00; replay did not double post; reconciliation BALANCED | `make local-api` + `make demo` |
+| Frontend | `tsc` clean; 28 vitest tests passed; production build 188 kB JS (61 kB gzip); `npm audit` 0 vulnerabilities after upgrading react-router 7.18.5 / vite 7.3.8 / vitest 5.1.0 | `cd frontend && npm ci && npm run lint && npm test && npm run build` |
+| Browser walkthrough (Playwright, Chromium) | register → open checking ($4,850 opening journal) + savings → $250 transfer COMPLETED → $4,000 transfer COMPLETED → combined balance still $4,850.00 → history and 5 notifications shown; reviewer queue reachable | `make local-api`, `npm run dev`, scripted walkthrough |
 | Concurrency demo | 10×$300 from $1,000 → 3 posted, 7 rejected, balance $100.00 | `python scripts/simulate_failure.py concurrent-overdraw` |
 
 Not yet available: GitHub Actions run IDs, live AWS results, measured latency,
