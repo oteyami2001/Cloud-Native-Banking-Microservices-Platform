@@ -13,6 +13,12 @@ Confirm: account id, region, SCPs (deny lists), existing
 `token.actions.githubusercontent.com` provider ARN, name collisions with
 `novabank-*`, Lambda concurrency quota (≥ 50 unreserved recommended).
 
+## 0b. SCP pre-flight (read-only)
+```bash
+bash scripts/check_scp_permissions.sh
+```
+Any `False` in the SCP column means the apply would be blocked; stop and review.
+
 ## 1. Apply bootstrap (local state)
 ```bash
 cd terraform/bootstrap

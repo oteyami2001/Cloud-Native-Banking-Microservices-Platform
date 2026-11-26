@@ -1,3 +1,4 @@
 expected_account_id = "000000000000"
 region              = "us-east-2"
-# existing_oidc_provider_arn = "arn:aws:iam::000000000000:oidc-provider/token.actions.githubusercontent.com"
+# The target account already has a GitHub OIDC provider (docs/aws-discovery.md): reuse it.
+existing_oidc_provider_arn = "arn:aws:iam::000000000000:oidc-provider/token.actions.githubusercontent.com"
