@@ -45,3 +45,4 @@ artifacts/
 # Child-module lock files (only root modules pin provider hashes)
 terraform/modules/*/.terraform.lock.hcl
 terraform/modules/lambda-service/.placeholder-*.zip
+*.tsbuildinfo
