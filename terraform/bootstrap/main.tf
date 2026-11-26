@@ -120,6 +120,8 @@ module "github_oidc" {
   name_prefix                = "novabank"
   region                     = var.region
   github_repository          = var.github_repository
+  github_owner_id            = var.github_owner_id
+  github_repository_id       = var.github_repository_id
   existing_oidc_provider_arn = var.existing_oidc_provider_arn
   state_bucket               = local.state_bucket
   artifact_bucket            = local.artifact_bucket

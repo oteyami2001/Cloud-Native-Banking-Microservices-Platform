@@ -21,6 +21,18 @@ variable "github_repository" {
   default = "oteyami2001/Cloud-Native-Banking-Microservices-Platform"
 }
 
+variable "github_owner_id" {
+  type        = string
+  description = "Numeric owner ID used in GitHub's immutable-ID OIDC subject (from CloudTrail or the GitHub API)."
+  default     = "157901928"
+}
+
+variable "github_repository_id" {
+  type        = string
+  description = "Numeric repository ID used in GitHub's immutable-ID OIDC subject."
+  default     = "1465571609"
+}
+
 variable "existing_oidc_provider_arn" {
   type        = string
   description = "Set when scripts/discover_aws.sh finds an existing token.actions.githubusercontent.com provider."

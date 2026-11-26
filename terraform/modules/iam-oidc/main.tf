@@ -20,7 +20,14 @@ resource "aws_iam_openid_connect_provider" "github" {
 
 locals {
   provider_arn = coalesce(var.existing_oidc_provider_arn, try(aws_iam_openid_connect_provider.github[0].arn, null))
-  repo         = "repo:${var.github_repository}"
+  # GitHub may issue subjects in the immutable-ID format
+  # "repo:<owner>@<owner_id>/<name>@<repo_id>:..." (observed for this repository
+  # via CloudTrail, 2026-11-26). When IDs are supplied only that exact form is
+  # trusted, so a renamed or re-created repository cannot assume the roles.
+  repo_parts = split("/", var.github_repository)
+  repo = (var.github_owner_id != null && var.github_repository_id != null
+    ? "repo:${local.repo_parts[0]}@${var.github_owner_id}/${local.repo_parts[1]}@${var.github_repository_id}"
+  : "repo:${var.github_repository}")
   roles = {
     plan    = ["${local.repo}:pull_request", "${local.repo}:ref:refs/heads/main", "${local.repo}:environment:${var.plan_environment}"]
     apply   = ["${local.repo}:environment:${var.apply_environment}"]

@@ -10,6 +10,26 @@ variable "github_repository" {
   }
 }
 
+variable "github_owner_id" {
+  type        = string
+  description = "Numeric GitHub owner ID, for immutable-ID OIDC subjects. Null = name-based subjects."
+  default     = null
+  validation {
+    condition     = var.github_owner_id == null || can(regex("^[0-9]+$", var.github_owner_id))
+    error_message = "github_owner_id must be numeric."
+  }
+}
+
+variable "github_repository_id" {
+  type        = string
+  description = "Numeric GitHub repository ID, for immutable-ID OIDC subjects."
+  default     = null
+  validation {
+    condition     = var.github_repository_id == null || can(regex("^[0-9]+$", var.github_repository_id))
+    error_message = "github_repository_id must be numeric."
+  }
+}
+
 variable "existing_oidc_provider_arn" {
   type        = string
   description = "Reuse the account's existing GitHub OIDC provider instead of creating one."

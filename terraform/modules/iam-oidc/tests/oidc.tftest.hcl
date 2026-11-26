@@ -56,6 +56,30 @@ run "separate_roles_bound_to_repo_and_environments" {
   }
 }
 
+run "immutable_id_subjects" {
+  command = plan
+  variables {
+    github_owner_id      = "157901928"
+    github_repository_id = "1465571609"
+  }
+  assert {
+    condition     = local.roles["apply"] == ["repo:oteyami2001@157901928/Cloud-Native-Banking-Microservices-Platform@1465571609:environment:dev"]
+    error_message = "Apply role must trust the exact immutable-ID subject for the dev environment."
+  }
+  assert {
+    condition     = !anytrue([for k, subs in local.roles : anytrue([for s in subs : strcontains(s, "repo:oteyami2001/")])])
+    error_message = "Name-based subjects must not be trusted when IDs are supplied."
+  }
+}
+
+run "rejects_non_numeric_ids" {
+  command = plan
+  variables {
+    github_owner_id = "oteyami2001"
+  }
+  expect_failures = [var.github_owner_id]
+}
+
 run "reuses_existing_provider" {
   command = plan
   variables {
