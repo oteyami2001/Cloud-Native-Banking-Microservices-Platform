@@ -214,10 +214,12 @@ data "aws_iam_policy_document" "deploy" {
     actions   = ["lambda:InvokeFunction"]
     resources = ["arn:aws:lambda:${var.region}:${data.aws_caller_identity.current.account_id}:function:${var.name_prefix}-*-ledger-reconciliation:live"]
   }
+  # Per-version Lambda error metrics drive automatic rollback. GetMetricData has
+  # no resource-level permissions, so "*" is required (read-only).
   statement {
-    sid       = "ReadAlarmsForRollback"
-    actions   = ["cloudwatch:DescribeAlarms"]
-    resources = ["arn:aws:cloudwatch:${var.region}:${data.aws_caller_identity.current.account_id}:alarm:${var.name_prefix}-*"]
+    sid       = "ReadMetricsForRollback"
+    actions   = ["cloudwatch:GetMetricData"]
+    resources = ["*"]
   }
 }
 

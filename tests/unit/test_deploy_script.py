@@ -5,7 +5,6 @@ from __future__ import annotations
 import io
 import json
 import sys
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -47,11 +46,17 @@ class FakeS3:
 
 
 class FakeCW:
-    def __init__(self, alarms):
-        self.alarms = alarms
+    def __init__(self, errors_by_function=None):
+        self.errors = errors_by_function or {}
+        self.queries = []
 
-    def describe_alarms(self, **_):
-        return {"MetricAlarms": self.alarms}
+    def get_metric_data(self, MetricDataQueries, **_):
+        self.queries = MetricDataQueries
+        out = []
+        for q in MetricDataQueries:
+            dims = {d["Name"]: d["Value"] for d in q["MetricStat"]["Metric"]["Dimensions"]}
+            out.append({"Id": q["Id"], "Values": [self.errors.get(dims["FunctionName"], 0.0)]})
+        return {"MetricDataResults": out}
 
 
 @pytest.fixture
@@ -74,27 +79,21 @@ def run(monkeypatch, manifest, lam, cw):
     return deploy_lambda.main()
 
 
-def test_successful_deploy_moves_aliases(monkeypatch, manifest):
-    lam = FakeLambda()
-    old_alarm = {
-        "AlarmName": "novabank-dev-lambda-errors-novabank-dev-ledger",
-        "StateUpdatedTimestamp": datetime.now(UTC) - timedelta(hours=1),
-    }
-    assert run(monkeypatch, manifest, lam, FakeCW([old_alarm])) == 0  # pre-existing alarm ignored
+def test_successful_deploy_moves_aliases_and_checks_only_new_versions(monkeypatch, manifest):
+    lam, cw = FakeLambda(), FakeCW()
+    assert run(monkeypatch, manifest, lam, cw) == 0
     assert lam.aliases == {"novabank-dev-ledger": "2", "novabank-dev-ledger-reconciliation": "2"}
+    dims = [{d["Name"]: d["Value"] for d in q["MetricStat"]["Metric"]["Dimensions"]} for q in cw.queries]
+    assert all(d["ExecutedVersion"] == "2" and d["Resource"].endswith(":live") for d in dims)
 
 
 def test_failed_smoke_test_rolls_back(monkeypatch, manifest):
     lam = FakeLambda(smoke_status="ERROR")
-    assert run(monkeypatch, manifest, lam, FakeCW([])) == 1
+    assert run(monkeypatch, manifest, lam, FakeCW()) == 1
     assert lam.aliases == {"novabank-dev-ledger": "1", "novabank-dev-ledger-reconciliation": "1"}
 
 
-def test_new_error_alarm_rolls_back(monkeypatch, manifest):
+def test_errors_from_a_new_version_roll_back(monkeypatch, manifest):
     lam = FakeLambda()
-    new_alarm = {
-        "AlarmName": "novabank-dev-lambda-errors-novabank-dev-ledger",
-        "StateUpdatedTimestamp": datetime.now(UTC) + timedelta(seconds=5),
-    }
-    assert run(monkeypatch, manifest, lam, FakeCW([new_alarm])) == 1
+    assert run(monkeypatch, manifest, lam, FakeCW({"novabank-dev-ledger": 2.0})) == 1
     assert lam.aliases["novabank-dev-ledger"] == "1"

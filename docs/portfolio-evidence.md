@@ -48,6 +48,8 @@ Redact account IDs and other identifiers before publishing.
 | terraform-apply (approved) | [45903536259](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45903536259) | `Apply complete! Resources: 61 added, 0 changed, 0 destroyed.` — dev infrastructure complete (182 resources) |
 | Pre-deploy review | — | Fixed 3 deploy-pipeline defects before first use: missing boto3 on runner, smoke test needing a permission the deploy role lacks, alarm check that would have rolled back on placeholder-era alarms |
 
+| deploy-services #1 | [45904772462](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45904772462) | 10 artifacts verified (SHA-256 + attestations), 10 versions published, aliases moved, then **automatic rollback** of all aliases (T27 mechanism exercised). Cause: alarm-based health check counted errors from the placeholder code still being invoked by schedules. Fix: health check now uses Lambda `Errors` per new `ExecutedVersion` |
+
 Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 
 Not yet available: service deployment run IDs, live AWS results, measured latency,

@@ -7,9 +7,11 @@ For each service:
   3. record the alias's previous version, then point "live" at the new one
 After all services: smoke-test with the ledger-reconciliation job (exercises IAM,
 DynamoDB, S3 evidence and the outbox end to end; the deploy role may invoke only
-that function) and check that no Lambda error alarm for a deployed function has
-entered ALARM since this deployment started (alarms already firing from the
-previous code, e.g. placeholders, are ignored).
+that function), bake, then check the Lambda ``Errors`` metric *per newly
+published version* (dimension ExecutedVersion). Alarms are deliberately not
+used: they aggregate all versions, so errors from the previous code (e.g. the
+placeholders still being invoked by schedules) would trigger false rollbacks
+(first dev deploy, 2026-11-26).
 If anything fails, every alias already moved is pointed back to its previous
 version (T27). Output is Markdown for the GitHub step summary.
 """
@@ -21,12 +23,41 @@ import json
 import os
 import sys
 import time
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import boto3
 
 SMOKE_FUNCTION = "ledger-reconciliation"
+
+
+def new_version_errors(cw, moved, started) -> list[tuple[str, str, float]]:
+    """Sum of Lambda Errors for each new version since the deployment started."""
+
+    if not moved:
+        return []
+    queries = [
+        {
+            "Id": f"e{i}",
+            "MetricStat": {
+                "Metric": {
+                    "Namespace": "AWS/Lambda",
+                    "MetricName": "Errors",
+                    "Dimensions": [
+                        {"Name": "FunctionName", "Value": fn},
+                        {"Name": "Resource", "Value": f"{fn}:live"},
+                        {"Name": "ExecutedVersion", "Value": new},
+                    ],
+                },
+                "Period": 60,
+                "Stat": "Sum",
+            },
+        }
+        for i, (fn, _, new) in enumerate(moved)
+    ]
+    result = cw.get_metric_data(MetricDataQueries=queries, StartTime=started - timedelta(minutes=1), EndTime=datetime.now(UTC))
+    totals = {r["Id"]: sum(r.get("Values", [])) for r in result["MetricDataResults"]}
+    return [(fn, new, totals.get(f"e{i}", 0.0)) for i, (fn, _, new) in enumerate(moved) if totals.get(f"e{i}", 0.0) > 0]
 
 
 def main() -> int:
@@ -66,15 +97,11 @@ def main() -> int:
             if out.get("FunctionError") or body.get("status") not in {"BALANCED", "DISCREPANCIES_FOUND"}:
                 raise RuntimeError(f"smoke test failed: {body}")
             print(f"\nSmoke test: reconciliation `{body['run_id']}` -> **{body['status']}** ({body['accounts_checked']} accounts)")
-        time.sleep(int(os.environ.get("BAKE_SECONDS", "90")))
-        deployed = {fn for fn, _, _ in moved}
-        new_alarms = [
-            a["AlarmName"]
-            for a in cw.describe_alarms(AlarmNamePrefix=f"{prefix}-lambda-errors", StateValue="ALARM")["MetricAlarms"]
-            if a["AlarmName"].removeprefix(f"{prefix}-lambda-errors-") in deployed and a["StateUpdatedTimestamp"] >= started
-        ]
-        if new_alarms:
-            raise RuntimeError("error alarms raised after deploy: " + ", ".join(new_alarms))
+        time.sleep(int(os.environ.get("BAKE_SECONDS", "120")))
+        failing = new_version_errors(cw, moved, started)
+        if failing:
+            raise RuntimeError("errors from new versions: " + ", ".join(f"{fn}:{v} ({n:.0f})" for fn, v, n in failing))
+        print(f"\nNo errors recorded for the {len(moved)} new versions during the bake period.")
         print("\nSmoke tests and alarm checks passed.")
         return 0
     except Exception as exc:  # noqa: BLE001 - any failure triggers rollback
