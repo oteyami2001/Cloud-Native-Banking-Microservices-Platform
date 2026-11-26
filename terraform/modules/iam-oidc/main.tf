@@ -200,9 +200,10 @@ data "aws_iam_policy_document" "deploy" {
     resources = ["arn:aws:s3:::${var.artifact_bucket}", "arn:aws:s3:::${var.artifact_bucket}/*"]
   }
   statement {
-    sid       = "FrontendSync"
-    actions   = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
-    resources = ["arn:aws:s3:::${var.name_prefix}-site-*", "arn:aws:s3:::${var.name_prefix}-site-*/*"]
+    sid     = "FrontendSync"
+    actions = ["s3:PutObject", "s3:DeleteObject", "s3:ListBucket"]
+    # Site buckets are named <prefix>-<env>-site-<account>, e.g. novabank-dev-site-123456789012.
+    resources = ["arn:aws:s3:::${var.name_prefix}-*-site-*", "arn:aws:s3:::${var.name_prefix}-*-site-*/*"]
   }
   statement {
     sid       = "FrontendInvalidate"

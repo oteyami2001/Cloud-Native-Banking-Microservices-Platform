@@ -100,6 +100,22 @@ def test_lambda_code_is_owned_by_deploy_workflow():
     assert "ignore_changes = [function_version, routing_config]" in text
 
 
+def test_deploy_role_can_reach_the_site_bucket():
+    """The frontend bucket name built by the platform must match the deploy role's S3 pattern
+    (first frontend deploy failed with AccessDenied on s3:ListBucket, 2026-11-26)."""
+
+    import fnmatch
+
+    platform = (TF / "modules" / "platform" / "main.tf").read_text()
+    oidc = (TF / "modules" / "iam-oidc" / "main.tf").read_text()
+    bucket_expr = re.search(r'bucket_name\s+=\s+"\$\{local\.p\}-site-\$\{local\.account_id\}"', platform)
+    assert bucket_expr, "frontend bucket naming changed; update the deploy role pattern and this test"
+    example_bucket = "novabank-dev-site-123456789012"
+    frontend_sync = re.split(r'sid\s+=\s+"FrontendSync"', oidc)[1]
+    pattern = re.search(r'"arn:aws:s3:::\$\{var\.name_prefix\}([^"/]*)"', frontend_sync).group(1)
+    assert fnmatch.fnmatch(example_bucket, "novabank" + pattern), pattern
+
+
 def test_no_plan_time_generated_files():
     """Saved plans are applied on a different runner, so every file a resource
     reads must be committed rather than generated during plan."""
