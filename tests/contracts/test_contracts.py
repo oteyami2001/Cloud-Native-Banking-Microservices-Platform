@@ -31,9 +31,9 @@ def test_every_implemented_route_is_documented_and_vice_versa(spec):
 
 
 def test_terraform_routes_match_contract(spec):
-    tf = (ROOT / "terraform" / "envs" / "dev" / "main.tf").read_text()
+    tf = (ROOT / "terraform" / "modules" / "platform" / "main.tf").read_text()
     for route in ROUTES:
-        assert f'"{route}"' in tf, f"route {route} missing from terraform/envs/dev/main.tf"
+        assert f'"{route}"' in tf, f"route {route} missing from terraform/modules/platform/main.tf"
 
 
 def test_event_schemas_are_valid_json_schema():

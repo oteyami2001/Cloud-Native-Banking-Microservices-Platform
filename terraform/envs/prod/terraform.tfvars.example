@@ -1,0 +1,8 @@
+# Reference configuration — not deployed. Production would use a separate
+# account (Enterprise Landing Zone project) and a customer managed KMS key.
+expected_account_id      = "000000000000"
+log_retention_days       = 90
+deletion_protection      = true
+mfa_configuration        = "ON"
+sandbox_opening_balances = false
+evidence_force_destroy   = false

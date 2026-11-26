@@ -1,0 +1,9 @@
+# Copy to terraform.tfvars after confirming the target account (Phase 0 discovery).
+expected_account_id      = "000000000000"
+region                   = "us-east-2"
+enable_pitr              = true
+reserved_concurrency     = -1   # set 2-5 only if the account has spare unreserved concurrency
+log_retention_days       = 14
+evidence_force_destroy   = true # dev only: allows verified cleanup
+monthly_budget_usd       = 25
+# alert_email            = "you@example.com"

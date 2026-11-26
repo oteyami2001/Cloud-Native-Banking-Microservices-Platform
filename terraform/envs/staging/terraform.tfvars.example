@@ -1,0 +1,6 @@
+# Reference configuration — not deployed during the MVP.
+expected_account_id  = "000000000000"
+log_retention_days   = 30
+deletion_protection  = true
+mfa_configuration    = "ON"
+fault_injection      = {}
