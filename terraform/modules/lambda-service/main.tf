@@ -14,13 +14,11 @@ terraform {
   }
 }
 
-data "archive_file" "placeholder" {
-  type        = "zip"
-  output_path = "${path.module}/.placeholder-${var.name}.zip"
-  source {
-    filename = "placeholder.py"
-    content  = "def handler(event, context):\n    raise RuntimeError('No release deployed yet')\n"
-  }
+# Committed, deterministic placeholder package. It must be a file in the repo:
+# a package generated during `plan` does not exist on the separate runner that
+# applies the saved plan (first dev apply failed this way, 2026-11-26).
+locals {
+  placeholder = "${path.module}/placeholder.zip"
 }
 
 data "aws_iam_policy_document" "assume" {
@@ -92,8 +90,8 @@ resource "aws_lambda_function" "this" {
   runtime                        = "python3.13"
   architectures                  = ["arm64"]
   handler                        = var.handler
-  filename                       = data.archive_file.placeholder.output_path
-  source_code_hash               = data.archive_file.placeholder.output_base64sha256
+  filename                       = local.placeholder
+  source_code_hash               = filebase64sha256(local.placeholder)
   memory_size                    = var.memory_mb
   timeout                        = var.timeout_seconds
   reserved_concurrent_executions = var.reserved_concurrency

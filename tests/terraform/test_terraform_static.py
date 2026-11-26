@@ -98,3 +98,12 @@ def test_lambda_code_is_owned_by_deploy_workflow():
     text = (TF / "modules" / "lambda-service" / "main.tf").read_text()
     assert "ignore_changes = [filename, source_code_hash" in text
     assert "ignore_changes = [function_version, routing_config]" in text
+
+
+def test_no_plan_time_generated_files():
+    """Saved plans are applied on a different runner, so every file a resource
+    reads must be committed rather than generated during plan."""
+
+    for path in (TF / "modules").rglob("*.tf"):
+        assert 'data "archive_file"' not in path.read_text(), path
+    assert (TF / "modules" / "lambda-service" / "placeholder.zip").is_file()

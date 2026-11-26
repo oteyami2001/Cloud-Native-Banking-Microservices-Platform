@@ -36,5 +36,12 @@ Redact account IDs and other identifiers before publishing.
 | ci — Python (ruff, 170 tests, coverage ≥85%), Terraform (fmt, 4 roots validate, 10 test suites), Frontend (tsc, vitest, build) | [45889062755](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45889062755) | 3/3 jobs success |
 | security-scan — Checkov + insecure-fixture negative test + TFLint, Bandit + pip-audit, gitleaks, zizmor, CodeQL (Python, JS/TS) | [45889062736](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45889062736) | 6/6 jobs success (dependency review skipped: push event) |
 
+## 2026-11-26 — First dev apply (partial) and fix
+| Step | Run | Result |
+|---|---|---|
+| terraform-plan | [45898457409](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45898457409) | `Plan: 182 to add, 0 to change, 0 to destroy` @ 748628d |
+| terraform-apply (approved) | [45898915092](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45898915092) | **Partial**: plan integrity verified, most resources created; 10 Lambda functions (and dependants) failed — placeholder zip generated at plan time was absent on the apply runner |
+| Fix | — | Committed deterministic `placeholder.zip`; regression test forbids plan-time generated files |
+
 Not yet available: deployment run IDs, live AWS results, measured latency,
 measured RTO/RPO, actual costs.
