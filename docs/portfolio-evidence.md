@@ -44,5 +44,11 @@ Redact account IDs and other identifiers before publishing.
 | Fix | — | Committed deterministic `placeholder.zip`; regression test forbids plan-time generated files |
 | terraform-plan (resume) | [45901933153](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45901933153) | `61 to add, 2 to change, 0 to destroy`; review found the 2 changes were a permanent CloudFront TLS diff (default certificate cannot enforce TLSv1.2) — config corrected to AWS's effective value and exception documented before applying |
 
-Not yet available: deployment run IDs, live AWS results, measured latency,
+| terraform-plan | [45903178161](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45903178161) | `61 to add, 0 to change, 0 to destroy` @ 7dba980 |
+| terraform-apply (approved) | [45903536259](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45903536259) | `Apply complete! Resources: 61 added, 0 changed, 0 destroyed.` — dev infrastructure complete (182 resources) |
+| Pre-deploy review | — | Fixed 3 deploy-pipeline defects before first use: missing boto3 on runner, smoke test needing a permission the deploy role lacks, alarm check that would have rolled back on placeholder-era alarms |
+
+Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
+
+Not yet available: service deployment run IDs, live AWS results, measured latency,
 measured RTO/RPO, actual costs.
