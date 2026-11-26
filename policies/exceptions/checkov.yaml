@@ -95,3 +95,7 @@ exceptions:
     scope: CloudWatch log groups
     reason: Retention is a variable; 14 days in dev for cost. Prod reference uses 90+ days.
     review_by: 2027-03-31
+  - check_id: CKV_AWS_26
+    scope: ops alerts SNS topic
+    reason: CloudWatch alarms cannot publish to topics encrypted with the AWS managed alias/aws/sns key; alarm payloads contain no customer data. Customer managed key is the prod option (~USD 1/month).
+    review_by: 2027-03-31

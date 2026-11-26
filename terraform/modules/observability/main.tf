@@ -2,9 +2,13 @@
 # Custom metrics come from CloudWatch EMF log lines in namespace NovaBank/Banking
 # with low-cardinality dimensions only.
 
+# Not encrypted with alias/aws/sns on purpose: CloudWatch alarms cannot publish
+# to topics using the AWS managed SNS key (its key policy cannot be extended),
+# so alarms would fail silently. Messages carry only alarm names, transfer IDs
+# and scores (no customer data). A customer managed key is the prod option.
 resource "aws_sns_topic" "ops" {
-  name              = "${var.name_prefix}-ops-alerts"
-  kms_master_key_id = "alias/aws/sns"
+  #checkov:skip=CKV_AWS_26:CloudWatch alarms cannot use alias/aws/sns; payloads contain no customer data
+  name = "${var.name_prefix}-ops-alerts"
 }
 
 resource "aws_sns_topic_subscription" "email" {

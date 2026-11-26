@@ -311,6 +311,8 @@ module "evidence" {
   bucket_name = local.evidence_bucket
   writer_role_arns = concat(
     [module.service["audit"].role_arn, module.service["ledger-reconciliation"].role_arn],
+    # The GitHub cleanup role must be able to empty the bucket on destroy (T30).
+    ["arn:aws:iam::${local.account_id}:role/novabank-github-cleanup"],
     var.evidence_admin_role_arns,
   )
   force_destroy = var.evidence_force_destroy
