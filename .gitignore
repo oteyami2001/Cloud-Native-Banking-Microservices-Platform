@@ -41,3 +41,7 @@ credentials*
 # Evidence produced locally (redact before publishing)
 evidence/local/
 artifacts/
+
+# Child-module lock files (only root modules pin provider hashes)
+terraform/modules/*/.terraform.lock.hcl
+terraform/modules/lambda-service/.placeholder-*.zip
