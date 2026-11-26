@@ -19,8 +19,19 @@ Run by the owner in AWS CloudShell on 2026-11-26 with `scripts/discover_aws.sh u
 | Lambda concurrency | Quota 400, unreserved 400 | Sufficient; `reserved_concurrency = -1` (unreserved) |
 | Month-to-date cost | ≈ $0.00 (Nov 1–27) | Previous projects appear cleaned up; NovaBank costs will be easy to attribute |
 
+## SCP pre-flight (`scripts/check_scp_permissions.sh`, 2026-11-26)
+| Simulation | Denied by SCP | Allowed |
+|---|---|---|
+| No request context | 33 (all regional services) | 15 (IAM, CloudFront, Budgets, Logs, KMS) |
+| `aws:RequestedRegion = us-east-2` | **0** | 48 |
+| Region + `Project` request tag | **0** | 48 |
+
+Conclusion: the organization SCP is **region-conditioned**. us-east-2 is permitted for every
+action the platform needs; global services are exempt. Deploying in any other region would be
+denied. Risk 1 below is therefore closed for the simulated actions.
+
 ## Risks recorded
-1. **Unknown SCP scope.** Only some denied actions are known. Some may hit Phase 7/8 resources
+1. ~~**Unknown SCP scope.**~~ Resolved by the pre-flight above (region-conditioned). Only some denied actions are known. Some may hit Phase 7/8 resources
    (for example Cognito or CloudFront, which earlier projects did not use). Mitigation: simulator
    pre-flight, and bootstrap applied before the workload so any denial is found early and cheaply.
 2. **Shared OIDC provider.** It is managed outside this project, probably by an earlier project's state.
