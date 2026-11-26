@@ -14,7 +14,7 @@ resource "aws_budgets_budget" "project" {
   }
 
   dynamic "notification" {
-    for_each = var.notification_emails == [] ? [] : [50, 80, 100]
+    for_each = length(var.notification_emails) == 0 ? [] : [50, 80, 100]
     content {
       comparison_operator        = "GREATER_THAN"
       threshold                  = notification.value
@@ -25,7 +25,7 @@ resource "aws_budgets_budget" "project" {
   }
 
   dynamic "notification" {
-    for_each = var.notification_emails == [] ? [] : [1]
+    for_each = length(var.notification_emails) == 0 ? [] : [1]
     content {
       comparison_operator        = "GREATER_THAN"
       threshold                  = 100

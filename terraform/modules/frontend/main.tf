@@ -2,6 +2,10 @@
 # never public; only this distribution can read it.
 
 resource "aws_s3_bucket" "site" {
+  #checkov:skip=CKV_AWS_145:Public static assets only; SSE-S3 avoids KMS key policy coupling with CloudFront OAC
+  #checkov:skip=CKV_AWS_144:Rebuildable from Git; replication not needed
+  #checkov:skip=CKV_AWS_18:Static site; CloudFront is the only reader
+  #checkov:skip=CKV2_AWS_62:No consumers for bucket event notifications
   bucket        = var.bucket_name
   force_destroy = true # static build output only; rebuilt from Git
 }
@@ -37,6 +41,21 @@ resource "aws_s3_bucket_versioning" "site" {
   }
 }
 
+resource "aws_s3_bucket_lifecycle_configuration" "site" {
+  bucket = aws_s3_bucket.site.id
+  rule {
+    id     = "expire-old-builds"
+    status = "Enabled"
+    filter {}
+    noncurrent_version_expiration {
+      noncurrent_days = 30
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
+}
+
 resource "aws_cloudfront_origin_access_control" "site" {
   name                              = "${var.name_prefix}-site"
   origin_access_control_origin_type = "s3"
@@ -54,7 +73,7 @@ resource "aws_cloudfront_response_headers_policy" "security" {
     strict_transport_security {
       access_control_max_age_sec = 63072000
       include_subdomains         = true
-      preload                    = false
+      preload                    = true
       override                   = true
     }
     content_type_options {
@@ -72,6 +91,12 @@ resource "aws_cloudfront_response_headers_policy" "security" {
 }
 
 resource "aws_cloudfront_distribution" "site" {
+  #checkov:skip=CKV2_AWS_42:No custom domain in MVP; default CloudFront certificate with TLS 1.2 minimum
+  #checkov:skip=CKV2_AWS_47:WAF optional pending cost approval (web_acl_arn variable)
+  #checkov:skip=CKV_AWS_310:Single S3 origin; static site can be redeployed
+  #checkov:skip=CKV_AWS_374:Synthetic demo intended for global portfolio reviewers
+  #checkov:skip=CKV_AWS_86:Access logging deferred for cost; enable with a log bucket in prod
+  #checkov:skip=CKV_AWS_68:WAF optional pending cost approval (web_acl_arn variable)
   enabled             = true
   comment             = "${var.name_prefix} NovaBank Digital (synthetic demo)"
   default_root_object = "index.html"

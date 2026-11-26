@@ -1,0 +1,76 @@
+name: terraform-plan
+
+# Generates a reviewed, integrity-protected plan. Uses the read-only plan role.
+# Fork pull requests never receive an OIDC token (id-token is not granted).
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: Environment root to plan
+        type: choice
+        options: [dev]
+        default: dev
+  pull_request:
+    paths: ["terraform/**"]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ inputs.environment || 'dev' }}
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    if: vars.AWS_ACCOUNT_ID != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-24.04
+    environment: plan
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      TF_DIR: terraform/envs/${{ inputs.environment || 'dev' }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+      - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/novabank-github-plan
+          role-session-name: plan-${{ github.run_id }}
+      - name: Verify target account (fail closed)
+        run: |
+          actual=$(aws sts get-caller-identity --query Account --output text)
+          test "$actual" = "${{ vars.AWS_ACCOUNT_ID }}" || { echo "::error::Account mismatch"; exit 1; }
+      - name: Init
+        run: |
+          terraform -chdir="$TF_DIR" init -input=false -lockfile=readonly \
+            -backend-config="bucket=novabank-tfstate-${{ vars.AWS_ACCOUNT_ID }}-${{ vars.AWS_REGION }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
+      - name: Plan
+        run: |
+          terraform -chdir="$TF_DIR" plan -input=false -lock-timeout=5m -out=tfplan \
+            -var="expected_account_id=${{ vars.AWS_ACCOUNT_ID }}" -var="region=${{ vars.AWS_REGION }}" \
+            -var='evidence_force_destroy=true'
+          terraform -chdir="$TF_DIR" show -no-color tfplan > "$TF_DIR/tfplan.txt"
+      - name: Record plan integrity metadata
+        run: |
+          cd "$TF_DIR"
+          sha256sum tfplan > tfplan.sha256
+          printf '{"commit":"%s","run_id":"%s","environment":"%s"}\n' "$GITHUB_SHA" "$GITHUB_RUN_ID" "${{ inputs.environment || 'dev' }}" > tfplan.meta.json
+          { echo '## Terraform plan'; echo '```'; tail -n 40 tfplan.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: tfplan-${{ inputs.environment || 'dev' }}
+          path: |
+            ${{ env.TF_DIR }}/tfplan
+            ${{ env.TF_DIR }}/tfplan.txt
+            ${{ env.TF_DIR }}/tfplan.sha256
+            ${{ env.TF_DIR }}/tfplan.meta.json
+          retention-days: 5

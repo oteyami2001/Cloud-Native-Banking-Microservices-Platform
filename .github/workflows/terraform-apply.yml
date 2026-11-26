@@ -1,0 +1,74 @@
+name: terraform-apply
+
+# Applies a previously generated plan after environment approval.
+# Fails closed if the plan artifact, checksum or source commit do not match.
+
+on:
+  workflow_dispatch:
+    inputs:
+      plan_run_id:
+        description: Run ID of the terraform-plan workflow to apply
+        required: true
+        type: string
+      environment:
+        type: choice
+        options: [dev]
+        default: dev
+
+permissions:
+  contents: read
+
+concurrency:
+  group: terraform-${{ inputs.environment }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: vars.AWS_ACCOUNT_ID != ''
+    runs-on: ubuntu-24.04
+    environment: ${{ inputs.environment }} # protected: required reviewers (BANK-SEC-016)
+    permissions:
+      contents: read
+      id-token: write
+      actions: read
+    env:
+      TF_DIR: terraform/envs/${{ inputs.environment }}
+    steps:
+      - name: Validate inputs
+        env:
+          PLAN_RUN_ID: ${{ inputs.plan_run_id }}
+        run: '[[ "$PLAN_RUN_ID" =~ ^[0-9]+$ ]] || { echo "::error::plan_run_id must be numeric"; exit 1; }'
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3.1.2
+        with:
+          terraform_version: 1.13.4
+          terraform_wrapper: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: tfplan-${{ inputs.environment }}
+          run-id: ${{ inputs.plan_run_id }}
+          github-token: ${{ github.token }}
+          path: ${{ env.TF_DIR }}
+      - name: Verify plan integrity (fail closed)
+        run: |
+          cd "$TF_DIR"
+          sha256sum -c tfplan.sha256
+          planned_commit=$(python3 -c 'import json;print(json.load(open("tfplan.meta.json"))["commit"])')
+          test "$planned_commit" = "$GITHUB_SHA" || { echo "::error::Plan was generated from $planned_commit, not $GITHUB_SHA"; exit 1; }
+      - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/novabank-github-apply
+          role-session-name: apply-${{ github.run_id }}
+      - run: |
+          terraform -chdir="$TF_DIR" init -input=false -lockfile=readonly \
+            -backend-config="bucket=novabank-tfstate-${{ vars.AWS_ACCOUNT_ID }}-${{ vars.AWS_REGION }}" \
+            -backend-config="region=${{ vars.AWS_REGION }}"
+      - run: terraform -chdir="$TF_DIR" apply -input=false -lock-timeout=5m tfplan
+      - run: terraform -chdir="$TF_DIR" output -json platform > platform-outputs.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: platform-outputs-${{ inputs.environment }}
+          path: platform-outputs.json

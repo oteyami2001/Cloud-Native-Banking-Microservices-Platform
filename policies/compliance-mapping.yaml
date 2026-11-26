@@ -1,0 +1,35 @@
+# Mapping of NovaBank controls to selected framework requirements.
+#
+# IMPORTANT: NovaBank Digital is a synthetic demonstration. These mappings show
+# design intent only; they are NOT an assessment, attestation or claim of
+# compliance or certification. No cardholder data is processed, so PCI DSS
+# references describe analogous practices. Identifiers should be re-verified
+# against the authoritative publications before reuse:
+#   NIST SP 800-53 Rev. 5 (csrc.nist.gov), PCI DSS v4.0.1 (pcisecuritystandards.org),
+#   CIS AWS Foundations Benchmark v3.0.0 (cisecurity.org), AICPA 2017 Trust Services
+#   Criteria (SOC 2), OWASP API Security Top 10 2023 (owasp.org).
+disclaimer: Design-intent mapping for a synthetic portfolio project; not a compliance claim.
+mappings:
+  BANK-SEC-001: { nist_800_53: [IA-2, IA-5, IA-8], pci_dss_4_0_1: ["8.2", "8.3"], soc2: [CC6.1], owasp_api_2023: [API2] }
+  BANK-SEC-002: { nist_800_53: ["IA-2(1)", "IA-2(2)"], pci_dss_4_0_1: ["8.4"], cis_aws_3_0: ["1.10"], soc2: [CC6.1] }
+  BANK-SEC-003: { nist_800_53: [AC-3, AC-6], pci_dss_4_0_1: ["7.2"], soc2: [CC6.1, CC6.3], owasp_api_2023: [API5] }
+  BANK-SEC-004: { nist_800_53: [AC-3, AC-4], pci_dss_4_0_1: ["7.2"], soc2: [CC6.1], owasp_api_2023: [API1, API3] }
+  BANK-SEC-005: { nist_800_53: [AC-5, AC-6], pci_dss_4_0_1: ["7.2"], soc2: [CC6.3], owasp_api_2023: [API5, API6] }
+  BANK-SEC-006: { nist_800_53: [SC-28, SC-12], pci_dss_4_0_1: ["3.5"], cis_aws_3_0: ["2.1.1", "2.3.1"], soc2: [CC6.1] }
+  BANK-SEC-007: { nist_800_53: [SC-8, SC-13], pci_dss_4_0_1: ["4.2"], cis_aws_3_0: ["2.1.1"], soc2: [CC6.7] }
+  BANK-SEC-008: { nist_800_53: [SI-7, SI-10], soc2: [PI1.2, PI1.3], owasp_api_2023: [API6] }
+  BANK-SEC-009: { nist_800_53: [SI-10], soc2: [PI1.3] }
+  BANK-SEC-010: { nist_800_53: [SI-4, AC-5], soc2: [CC7.2], owasp_api_2023: [API6] }
+  BANK-SEC-011: { nist_800_53: [IA-5, SC-12], pci_dss_4_0_1: ["8.3.2"], soc2: [CC6.1] }
+  BANK-SEC-012: { nist_800_53: [AU-2, AU-9, AU-10, AU-12], pci_dss_4_0_1: ["10.2", "10.3"], soc2: [CC7.2] }
+  BANK-SEC-013: { nist_800_53: [CM-2, CM-6, RA-5], pci_dss_4_0_1: ["6.3", "11.3"], soc2: [CC7.1, CC8.1], owasp_api_2023: [API8] }
+  BANK-SEC-014: { nist_800_53: [SA-11, RA-5, SI-10], pci_dss_4_0_1: ["6.2", "6.3"], soc2: [CC8.1] }
+  BANK-SEC-015: { nist_800_53: [SR-3, SR-4, SR-11, CM-8], pci_dss_4_0_1: ["6.3.2"], soc2: [CC8.1], owasp_api_2023: [API10] }
+  BANK-SEC-016: { nist_800_53: [CM-3, CM-5], pci_dss_4_0_1: ["6.5"], soc2: [CC8.1] }
+  BANK-SEC-017: { nist_800_53: [AC-2, AC-6, IA-5], pci_dss_4_0_1: ["7.2", "8.6"], cis_aws_3_0: ["1.16"], soc2: [CC6.2, CC6.3] }
+  BANK-SEC-018: { nist_800_53: [CP-9, CP-10], pci_dss_4_0_1: ["12.10"], soc2: [A1.2, A1.3] }
+  BANK-SEC-019: { nist_800_53: [SC-5], soc2: [A1.1], owasp_api_2023: [API4] }
+  BANK-SEC-020: { nist_800_53: [SI-4, AU-6, IR-4], pci_dss_4_0_1: ["10.4", "10.7"], cis_aws_3_0: ["3.1"], soc2: [CC7.2, CC7.3], owasp_api_2023: [API9] }
+financial_sector_considerations:
+  GLBA: Safeguards Rule themes (access controls, encryption, monitoring, incident response) are reflected in BANK-SEC-001..020; no nonpublic personal information is collected.
+  FFIEC: IT Examination Handbook themes (authentication, change management, business continuity) inform the runbooks and ADRs; no examination or regulatory approval is implied.

@@ -3,6 +3,9 @@
 # roles. Object Lock is OFF by default: it would block cleanup (ADR-0012).
 
 resource "aws_s3_bucket" "this" {
+  #checkov:skip=CKV_AWS_144:Single-region MVP; cross-region replication not approved (cost)
+  #checkov:skip=CKV_AWS_18:Access logging needs a separate log bucket; CloudTrail data events optional
+  #checkov:skip=CKV2_AWS_62:No consumers for bucket event notifications
   bucket        = var.bucket_name
   force_destroy = var.force_destroy
 }

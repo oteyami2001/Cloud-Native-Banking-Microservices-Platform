@@ -52,6 +52,8 @@ resource "aws_apigatewayv2_route" "this" {
 }
 
 resource "aws_cloudwatch_log_group" "access" {
+  #checkov:skip=CKV_AWS_158:Access logs exclude headers and bodies; CMK optional
+  #checkov:skip=CKV_AWS_338:Retention is configurable; 14 days in dev for cost
   name              = "/aws/apigateway/${var.name_prefix}-api"
   retention_in_days = var.log_retention_days
 }

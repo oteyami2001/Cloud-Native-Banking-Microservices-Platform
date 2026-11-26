@@ -1,0 +1,97 @@
+# Security finding exceptions (BANK-SEC-013). Each entry maps to one or more
+# inline `#checkov:skip` annotations. Exceptions are reviewed at every phase
+# boundary; "review_by" is the latest date by which each must be re-justified.
+owner: project-owner
+exceptions:
+  - check_id: CKV2_AWS_6
+    scope: terraform/bootstrap aws_s3_bucket.b
+    reason: False positive. Public access block is applied by a for_each sibling resource; verified by scripts/verify_bootstrap.sh.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_21
+    scope: terraform/bootstrap aws_s3_bucket.b
+    reason: False positive. Versioning is applied by a for_each sibling resource.
+    review_by: 2027-03-31
+  - check_id: CKV2_AWS_61
+    scope: terraform/bootstrap aws_s3_bucket.b
+    reason: False positive. Lifecycle configuration is applied by a for_each sibling resource.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_145
+    scope: bootstrap buckets (false positive); frontend site bucket
+    reason: Bootstrap buckets use SSE-KMS via sibling resource. The site bucket holds only public static assets and uses SSE-S3.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_144
+    scope: all S3 buckets
+    reason: Single-region MVP. Cross-region replication is a cost decision deferred to the production reference architecture.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_18
+    scope: all S3 buckets
+    reason: Server access logging requires a dedicated log bucket. API activity is captured by CloudTrail; revisit for prod.
+    review_by: 2027-03-31
+  - check_id: CKV2_AWS_62
+    scope: all S3 buckets
+    reason: No consumer exists for bucket event notifications.
+    review_by: 2027-03-31
+  - check_id: CKV2_AWS_42
+    scope: frontend CloudFront distribution
+    reason: No custom domain in the MVP (Route 53 optional). Default certificate with TLSv1.2_2021 minimum.
+    review_by: 2027-03-31
+  - check_id: CKV2_AWS_47
+    scope: frontend CloudFront distribution
+    reason: AWS WAF is optional pending cost approval (web_acl_arn variable).
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_68
+    scope: frontend CloudFront distribution
+    reason: AWS WAF is optional pending cost approval (web_acl_arn variable).
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_310
+    scope: frontend CloudFront distribution
+    reason: Single static origin rebuildable from Git; origin failover not required.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_374
+    scope: frontend CloudFront distribution
+    reason: Synthetic demonstration intended for global reviewers; no geo restriction requirement.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_86
+    scope: frontend CloudFront distribution
+    reason: Standard logging deferred for cost; enable with a dedicated log bucket in prod.
+    review_by: 2027-03-31
+  - check_id: CKV2_AWS_10
+    scope: optional project CloudTrail
+    reason: Trail is optional and off by default (an account/organization trail may already exist); CloudWatch delivery adds cost.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_35
+    scope: optional project CloudTrail
+    reason: Trail bucket default encryption is SSE-KMS (AWS managed key); a trail-specific CMK is not approved.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_252
+    scope: optional project CloudTrail
+    reason: Per-log-file SNS notifications are not required.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_119
+    scope: DynamoDB tables
+    reason: BANK-SEC-006 allows AWS-owned keys; customer managed key supported via kms_key_arn when approved (~USD 1/key/month).
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_116
+    scope: Lambda functions
+    reason: Asynchronous paths use SQS DLQs, EventBridge target DLQ and stream on-failure destinations instead of function DLQs.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_117
+    scope: Lambda functions
+    reason: ADR-0001. No customer VPC in the serverless MVP; avoids NAT Gateway and endpoint charges.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_173
+    scope: Lambda functions
+    reason: Environment variables contain only resource names; no secrets. Encrypted at rest with the AWS managed key.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_272
+    scope: Lambda functions
+    reason: Artifact integrity enforced by reproducible builds, SHA-256 manifest verification and GitHub build attestations (ADR-0011).
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_158
+    scope: CloudWatch log groups
+    reason: Logs exclude tokens, bodies and PII by design; customer managed key optional.
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_338
+    scope: CloudWatch log groups
+    reason: Retention is a variable; 14 days in dev for cost. Prod reference uses 90+ days.
+    review_by: 2027-03-31

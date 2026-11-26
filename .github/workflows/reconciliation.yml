@@ -1,0 +1,39 @@
+name: reconciliation
+
+on:
+  schedule:
+    - cron: "43 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reconcile:
+    if: vars.AWS_ACCOUNT_ID != ''
+    runs-on: ubuntu-24.04
+    environment: dev
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: aws-actions/configure-aws-credentials@b47578312673ae6fa5b5096b330d9fbac3d116df # v4.2.1
+        with:
+          aws-region: ${{ vars.AWS_REGION }}
+          role-to-assume: arn:aws:iam::${{ vars.AWS_ACCOUNT_ID }}:role/novabank-github-deploy
+          role-session-name: reconcile-${{ github.run_id }}
+      - name: Invoke ledger reconciliation
+        run: |
+          aws lambda invoke --function-name novabank-dev-ledger-reconciliation:live \
+            --cli-binary-format raw-in-base64-out --payload '{"trigger":"github-actions"}' report.json >/dev/null
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json, sys
+          r = json.load(open("report.json"))
+          print(f"## Reconciliation {r.get('run_id')}: **{r.get('status')}**")
+          for k in ("accounts_checked", "journals_checked", "transfers_checked", "discrepancy_count", "s3_key", "sha256"):
+              print(f"- {k}: {r.get(k)}")
+          sys.exit(0 if r.get("status") == "BALANCED" else 1)
+          PY

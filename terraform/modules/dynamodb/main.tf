@@ -25,6 +25,7 @@ locals {
 }
 
 resource "aws_dynamodb_table" "this" {
+  #checkov:skip=CKV_AWS_119:AWS owned key by default (BANK-SEC-006); customer managed key via kms_key_arn when approved
   for_each = local.tables
 
   name                        = "${var.name_prefix}-${each.key}"

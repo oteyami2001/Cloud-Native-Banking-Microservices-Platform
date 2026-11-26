@@ -1,0 +1,37 @@
+name: integration-tests
+
+# Synthetic banking scenarios. Offline scenarios always run; live scenarios run
+# against the deployed dev API only when a deployment exists.
+
+on:
+  workflow_dispatch:
+  workflow_call: # invoked by deploy-services after a successful deployment
+
+permissions:
+  contents: read
+
+jobs:
+  offline:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: "3.13"
+      - run: pip install -r requirements-dev.txt
+      - run: python -m pytest -q tests/integration tests/financial_invariants tests/concurrency tests/security --junitxml=reports/junit.xml
+      - run: python scripts/scenario_report.py reports/junit.xml >> "$GITHUB_STEP_SUMMARY"
+
+  live:
+    if: vars.API_BASE_URL != ''
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Live unauthenticated checks (T03)
+        env:
+          API: ${{ vars.API_BASE_URL }}
+        run: python3 scripts/live_smoke.py --api "$API" >> "$GITHUB_STEP_SUMMARY"

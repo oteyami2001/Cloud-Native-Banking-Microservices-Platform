@@ -1,0 +1,127 @@
+# NovaBank Digital security control catalogue (machine-readable).
+# status: implemented_offline = enforced in code/IaC and verified by offline tests/CI;
+#         designed = implemented in IaC, awaiting live AWS verification;
+#         planned = documented, not yet implemented.
+# Evidence paths are validated by tests/security/test_control_catalog.py.
+version: "1.0"
+controls:
+  - id: BANK-SEC-001
+    name: Customer authentication
+    implementation: Amazon Cognito user pool; OAuth 2.0 authorization code + PKCE; API Gateway JWT authorizer validates signature, expiry, issuer and audience.
+    evidence: [terraform/modules/identity/main.tf, terraform/modules/api-gateway/main.tf, shared/auth/__init__.py]
+    tests: [tests/security/test_authorization.py]
+    status: designed
+  - id: BANK-SEC-002
+    name: Multi-factor authentication
+    implementation: Cognito TOTP MFA (OPTIONAL in dev, ON in staging/prod reference configurations).
+    evidence: [terraform/modules/identity/main.tf, terraform/envs/prod/terraform.tfvars.example]
+    tests: []
+    status: designed
+  - id: BANK-SEC-003
+    name: API authorization (scopes)
+    implementation: Route-level authorization scopes in API Gateway plus in-service scope re-checks (defense in depth).
+    evidence: [terraform/modules/platform/main.tf, shared/auth/__init__.py]
+    tests: [tests/security/test_authorization.py, terraform/modules/platform/tests/platform.tftest.hcl]
+    status: implemented_offline
+  - id: BANK-SEC-004
+    name: Account ownership (object-level authorization)
+    implementation: Identity derived from the token subject via a server-side identity record; ownership checked on every object; foreign objects return 404; pagination cursors bound to the caller's partition.
+    evidence: [shared/identity.py, services/account/handler.py, shared/http.py]
+    tests: [tests/security/test_authorization.py]
+    status: implemented_offline
+  - id: BANK-SEC-005
+    name: Privileged operations and separation of duties
+    implementation: Admin routes require novabank/admin scope AND a Cognito group; reviewers cannot act on their own transfers or accounts.
+    evidence: [services/transfer/handler.py, services/fraud/handler.py, services/audit/handler.py]
+    tests: [tests/security/test_authorization.py, tests/integration/test_fraud_review.py]
+    status: implemented_offline
+  - id: BANK-SEC-006
+    name: Data encryption at rest
+    implementation: DynamoDB (AWS owned key, CMK optional), S3 SSE-KMS for evidence/state, SQS managed SSE, SNS aws/sns key.
+    evidence: [terraform/modules/dynamodb/main.tf, terraform/modules/evidence-store/main.tf, terraform/modules/queues/main.tf]
+    tests: [terraform/modules/evidence-store/tests/evidence.tftest.hcl]
+    status: designed
+  - id: BANK-SEC-007
+    name: Transport security
+    implementation: HTTPS-only API Gateway and CloudFront (TLSv1.2_2021); S3 and SQS policies deny non-TLS requests; HSTS headers.
+    evidence: [terraform/modules/frontend/main.tf, terraform/modules/evidence-store/main.tf, shared/http.py]
+    tests: [terraform/modules/frontend/tests/frontend.tftest.hcl]
+    status: designed
+  - id: BANK-SEC-008
+    name: Transaction integrity
+    implementation: Single DynamoDB TransactWriteItems per posting with conditional balance updates, immutable entries, journal header, posting record, state guard and outbox event.
+    evidence: [services/ledger/engine.py]
+    tests: [tests/financial_invariants/test_transfer_integrity.py, tests/financial_invariants/test_properties.py, tests/concurrency/test_concurrent_transfers.py]
+    status: implemented_offline
+  - id: BANK-SEC-009
+    name: Duplicate prevention
+    implementation: Principal-bound durable idempotency records (no TTL) plus permanent ledger posting records keyed by journal id.
+    evidence: [shared/idempotency/__init__.py, services/ledger/engine.py]
+    tests: [tests/financial_invariants/test_transfer_integrity.py, tests/concurrency/test_concurrent_transfers.py]
+    status: implemented_offline
+  - id: BANK-SEC-010
+    name: Fraud screening
+    implementation: Versioned deterministic rules engine; fail closed; decisions stored server-side; held transfers revalidated before posting.
+    evidence: [policies/fraud-rules.yaml, services/fraud/rules.py, services/fraud/handler.py]
+    tests: [tests/unit/test_fraud_rules.py, tests/integration/test_fraud_review.py]
+    status: implemented_offline
+  - id: BANK-SEC-011
+    name: Secrets management
+    implementation: No application secrets exist (public PKCE client, IAM roles, OIDC). Secrets Manager reserved for future integrations. Secret scanning in CI.
+    evidence: [terraform/modules/identity/main.tf, .github/workflows/security-scan.yml]
+    tests: [tests/security/test_supply_chain.py]
+    status: implemented_offline
+  - id: BANK-SEC-012
+    name: Audit evidence
+    implementation: Deterministic JSON evidence with SHA-256 in a versioned, SSE-KMS, TLS-only bucket; writes restricted to audit/reconciliation roles.
+    evidence: [services/audit/handler.py, terraform/modules/evidence-store/main.tf]
+    tests: [tests/integration/test_events_and_outbox.py]
+    status: implemented_offline
+  - id: BANK-SEC-013
+    name: Infrastructure security
+    implementation: terraform validate/test, Checkov, TFLint, static IAM least-privilege tests; exceptions catalogued.
+    evidence: [.github/workflows/ci.yml, .github/workflows/security-scan.yml, policies/exceptions/checkov.yaml]
+    tests: [tests/terraform/test_terraform_static.py]
+    status: implemented_offline
+  - id: BANK-SEC-014
+    name: Application security
+    implementation: Ruff (incl. flake8-bandit rules), Bandit, pip-audit, CodeQL, strict input validation, float rejection.
+    evidence: [pyproject.toml, .github/workflows/security-scan.yml, shared/validation.py]
+    tests: [tests/unit/test_money_and_validation.py]
+    status: implemented_offline
+  - id: BANK-SEC-015
+    name: Supply-chain security
+    implementation: SHA-pinned Actions, pinned dependencies, reproducible packages, SHA-256 manifest, CycloneDX SBOM, build provenance attestations, zizmor.
+    evidence: [scripts/build_lambda.py, scripts/verify_artifacts.py, .github/workflows/build-services.yml]
+    tests: [tests/security/test_supply_chain.py, tests/unit/test_packaging.py]
+    status: implemented_offline
+  - id: BANK-SEC-016
+    name: Deployment authorization
+    implementation: Protected GitHub environments (dev, cleanup) with required reviewers; plan-integrity verification; confirmation phrase for cleanup.
+    evidence: [.github/workflows/terraform-apply.yml, .github/workflows/deploy-services.yml, .github/workflows/cleanup.yml]
+    tests: [tests/security/test_supply_chain.py]
+    status: designed
+  - id: BANK-SEC-017
+    name: Cloud identity
+    implementation: GitHub OIDC with separate plan/apply/deploy/cleanup roles bound to repository and environment; per-service Lambda roles with a permissions boundary.
+    evidence: [terraform/modules/iam-oidc/main.tf, terraform/modules/security/main.tf, terraform/modules/platform/main.tf]
+    tests: [terraform/modules/iam-oidc/tests/oidc.tftest.hcl, tests/terraform/test_terraform_static.py]
+    status: designed
+  - id: BANK-SEC-018
+    name: Data recovery
+    implementation: DynamoDB PITR on system-of-record tables; restore + reconciliation runbook.
+    evidence: [terraform/modules/dynamodb/main.tf, runbooks/database-recovery.md]
+    tests: [terraform/modules/dynamodb/tests/dynamodb.tftest.hcl]
+    status: designed
+  - id: BANK-SEC-019
+    name: Abuse prevention
+    implementation: API Gateway stage throttling, body size limit, pagination limits, reserved concurrency option; optional WAF on CloudFront.
+    evidence: [terraform/modules/api-gateway/main.tf, shared/http.py]
+    tests: [terraform/modules/api-gateway/tests/api.tftest.hcl, tests/unit/test_auth_and_http.py]
+    status: designed
+  - id: BANK-SEC-020
+    name: Security monitoring
+    implementation: CloudWatch alarms (errors, throttles, DLQs, reconciliation, outbox), structured logs with correlation IDs and redaction, existing account CloudTrail reused.
+    evidence: [terraform/modules/observability/main.tf, shared/logging/__init__.py, shared/metrics.py]
+    tests: [tests/security/test_authorization.py]
+    status: designed

@@ -75,12 +75,18 @@ resource "aws_iam_role_policy" "service" {
 }
 
 resource "aws_cloudwatch_log_group" "this" {
+  #checkov:skip=CKV_AWS_158:Logs contain no secrets or PII; CMK optional via logs_kms_key_arn
+  #checkov:skip=CKV_AWS_338:Retention is configurable; 14 days in dev for cost
   name              = "/aws/lambda/${var.name_prefix}-${var.name}"
   retention_in_days = var.log_retention_days
   kms_key_id        = var.logs_kms_key_arn
 }
 
 resource "aws_lambda_function" "this" {
+  #checkov:skip=CKV_AWS_116:Synchronous and stream/SQS invocations use queue DLQs and on-failure destinations instead
+  #checkov:skip=CKV_AWS_117:ADR-0001: no customer VPC in the serverless MVP (avoids NAT/endpoint cost)
+  #checkov:skip=CKV_AWS_173:No secrets in environment variables; AWS managed key encryption at rest
+  #checkov:skip=CKV_AWS_272:Integrity enforced by SHA-256 manifest and GitHub build attestations (ADR-0011)
   function_name                  = "${var.name_prefix}-${var.name}"
   role                           = aws_iam_role.this.arn
   runtime                        = "python3.13"

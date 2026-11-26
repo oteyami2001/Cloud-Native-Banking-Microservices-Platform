@@ -1,0 +1,15 @@
+# Optional local stack: DynamoDB Local instead of the in-process moto server.
+#   docker compose up -d dynamodb
+#   AWS_ENDPOINT_URL=http://127.0.0.1:8000 make local-api
+# S3/EventBridge calls still need moto (local_api.py starts it when
+# AWS_ENDPOINT_URL is unset), so the moto path is the default.
+services:
+  dynamodb:
+    image: amazon/dynamodb-local:2.6.1
+    command: ["-jar", "DynamoDBLocal.jar", "-inMemory", "-sharedDb"]
+    ports:
+      - "127.0.0.1:8000:8000"
+  moto:
+    image: motoserver/moto:5.1.6
+    ports:
+      - "127.0.0.1:5001:5000"

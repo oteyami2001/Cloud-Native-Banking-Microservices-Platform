@@ -165,12 +165,17 @@ data "aws_iam_policy_document" "deploy" {
   statement {
     sid       = "FrontendInvalidate"
     actions   = ["cloudfront:CreateInvalidation", "cloudfront:GetInvalidation"]
-    resources = ["*"]
+    resources = ["arn:aws:cloudfront::${data.aws_caller_identity.current.account_id}:distribution/*"]
+  }
+  statement {
+    sid       = "RunOperationalJobs"
+    actions   = ["lambda:InvokeFunction"]
+    resources = ["arn:aws:lambda:${var.region}:${data.aws_caller_identity.current.account_id}:function:${var.name_prefix}-*-ledger-reconciliation:live"]
   }
   statement {
     sid       = "ReadAlarmsForRollback"
-    actions   = ["cloudwatch:DescribeAlarms", "cloudwatch:GetMetricData"]
-    resources = ["*"]
+    actions   = ["cloudwatch:DescribeAlarms"]
+    resources = ["arn:aws:cloudwatch:${var.region}:${data.aws_caller_identity.current.account_id}:alarm:${var.name_prefix}-*"]
   }
 }
 

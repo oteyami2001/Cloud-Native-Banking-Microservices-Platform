@@ -50,9 +50,50 @@ resource "aws_iam_policy" "boundary" {
 
 # ------------------------------------------------------------ optional trail
 resource "aws_s3_bucket" "trail" {
+  #checkov:skip=CKV_AWS_144:Optional single-region trail bucket
+  #checkov:skip=CKV_AWS_18:Trail log bucket; logging the log bucket is out of scope
+  #checkov:skip=CKV2_AWS_62:No consumers for bucket event notifications
   count         = var.create_project_trail ? 1 : 0
   bucket        = "${var.name_prefix}-cloudtrail-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
+}
+
+resource "aws_s3_bucket_versioning" "trail" {
+  count  = var.create_project_trail ? 1 : 0
+  bucket = aws_s3_bucket.trail[0].id
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "trail" {
+  count  = var.create_project_trail ? 1 : 0
+  bucket = aws_s3_bucket.trail[0].id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "aws:kms"
+    }
+    bucket_key_enabled = true
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "trail" {
+  count  = var.create_project_trail ? 1 : 0
+  bucket = aws_s3_bucket.trail[0].id
+  rule {
+    id     = "expire-trail-logs"
+    status = "Enabled"
+    filter {}
+    expiration {
+      days = 90
+    }
+    noncurrent_version_expiration {
+      noncurrent_days = 7
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
+    }
+  }
 }
 
 resource "aws_s3_bucket_public_access_block" "trail" {
@@ -96,6 +137,9 @@ resource "aws_s3_bucket_policy" "trail" {
 }
 
 resource "aws_cloudtrail" "project" {
+  #checkov:skip=CKV2_AWS_10:Optional project trail; CloudWatch Logs delivery adds cost
+  #checkov:skip=CKV_AWS_35:Optional project trail; SSE-S3 default on the trail bucket is SSE-KMS
+  #checkov:skip=CKV_AWS_252:SNS notification for every log file not required
   count                         = var.create_project_trail ? 1 : 0
   name                          = "${var.name_prefix}-trail"
   s3_bucket_name                = aws_s3_bucket.trail[0].id

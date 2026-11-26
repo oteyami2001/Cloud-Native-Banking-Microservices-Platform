@@ -26,6 +26,13 @@ locals {
 }
 
 resource "aws_s3_bucket" "b" {
+  #checkov:skip=CKV2_AWS_6:False positive - public access block applied via for_each sibling resource
+  #checkov:skip=CKV_AWS_21:False positive - versioning applied via for_each sibling resource
+  #checkov:skip=CKV2_AWS_61:False positive - lifecycle applied via for_each sibling resource
+  #checkov:skip=CKV_AWS_145:False positive - SSE-KMS applied via for_each sibling resource
+  #checkov:skip=CKV_AWS_144:Single-region MVP; cross-region replication not approved (cost)
+  #checkov:skip=CKV_AWS_18:Access logging needs a separate log bucket; CloudTrail covers API access
+  #checkov:skip=CKV2_AWS_62:No consumers for bucket event notifications
   for_each = { state = local.state_bucket, artifacts = local.artifact_bucket }
   bucket   = each.value
 }
@@ -75,6 +82,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "b" {
     filter {}
     noncurrent_version_expiration {
       noncurrent_days = 90
+    }
+    abort_incomplete_multipart_upload {
+      days_after_initiation = 1
     }
   }
 }

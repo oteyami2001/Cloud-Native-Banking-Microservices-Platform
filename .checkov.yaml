@@ -1,0 +1,8 @@
+# Checkov configuration. Exceptions are NOT listed here: each one is an inline
+# `#checkov:skip=<id>:<reason>` on the specific resource and is catalogued in
+# policies/exceptions/checkov.yaml with an owner and review date.
+compact: true
+quiet: true
+framework:
+  - terraform
+skip-download: true
