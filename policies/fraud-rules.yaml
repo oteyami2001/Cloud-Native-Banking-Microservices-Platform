@@ -1,0 +1,46 @@
+# NovaBank Digital — synthetic fraud screening policy.
+#
+# These are illustrative, explainable demonstration rules, NOT a validated
+# real-world fraud model. All conditions inside a rule are combined with AND.
+# Scores are additive; the decision is taken from the total score.
+#
+# Changing any rule requires a new policy_version (enforced by
+# tests/unit/test_fraud_rules.py, which pins a checksum per version).
+policy_version: "2026.11.1"
+review_validity_hours: 72
+thresholds:
+  pending_review_score: 40   # >= 40 -> PENDING_REVIEW (held, nothing posted)
+  reject_score: 80           # >= 80 -> REJECTED
+rules:
+  - id: FR-001
+    description: Large transfer (>= USD 5,000.00)
+    score: 40
+    when: { amount_minor_gte: 500000 }
+  - id: FR-002
+    description: Very large transfer (>= USD 9,000.00)
+    score: 45
+    when: { amount_minor_gte: 900000 }
+  - id: FR-003
+    description: Elevated velocity (>= 5 screenings by the customer in 60 minutes)
+    score: 25
+    when: { velocity_1h_gte: 5 }
+  - id: FR-004
+    description: High velocity (>= 10 screenings by the customer in 60 minutes)
+    score: 40
+    when: { velocity_1h_gte: 10 }
+  - id: FR-005
+    description: First transfer to a recipient account owned by another customer
+    score: 15
+    when: { new_recipient: true }
+  - id: FR-006
+    description: New recipient combined with an amount >= USD 1,000.00
+    score: 20
+    when: { new_recipient: true, amount_minor_gte: 100000 }
+  - id: FR-007
+    description: Source account opened less than 24 hours ago with amount >= USD 1,000.00
+    score: 25
+    when: { source_account_age_hours_lt: 24, amount_minor_gte: 100000 }
+  - id: FR-008
+    description: Customer flagged for unusual activity by an operator
+    score: 30
+    when: { unusual_activity: true }

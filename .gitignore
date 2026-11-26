@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.hypothesis/
+dist/
+build/
+
+# Node / frontend
+node_modules/
+frontend/dist/
+frontend/coverage/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+tfplan*
+crash.log
+.terraform.lock.hcl.bak
+override.tf
+override.tf.json
+*_override.tf
+*.auto.tfvars
+!*.example.auto.tfvars
+
+# Secrets and local config
+.env
+.env.*
+!.env.example
+*.pem
+credentials*
+.aws/
+
+# Evidence produced locally (redact before publishing)
+evidence/local/
+artifacts/

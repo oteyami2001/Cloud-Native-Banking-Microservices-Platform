@@ -1,0 +1,55 @@
+[project]
+name = "novabank-digital"
+version = "0.1.0"
+description = "NovaBank Digital — cloud-native banking microservices platform (synthetic demonstration sandbox)"
+requires-python = ">=3.13"
+readme = "README.md"
+license = { text = "MIT" }
+# Runtime: only boto3/botocore, which the AWS Lambda python3.13 runtime provides.
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+  "boto3==1.44.12",
+  "moto[dynamodb,events,sqs,s3,sns]==5.2.6",
+  "pytest==9.2.0",
+  "pytest-cov==7.1.0",
+  "hypothesis==6.170.17",
+  "jsonschema==4.26.0",
+  "openapi-spec-validator==0.9.0",
+  "PyYAML==6.0.4",
+  "ruff==0.17.6",
+  "bandit==1.9.4",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers"
+markers = [
+  "scenario(id): maps a test to a validation scenario (T01..T30) in docs/validation-scenarios.md",
+  "slow: long-running property or concurrency tests",
+]
+
+[tool.coverage.run]
+source = ["shared", "services", "workers"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+
+[tool.ruff]
+line-length = 140
+target-version = "py313"
+extend-exclude = ["frontend", ".venv", "terraform"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "S", "BLE", "C4", "SIM", "RUF"]
+ignore = ["S101", "RUF012", "SIM108"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S", "B017"]
+"scripts/**" = ["S"]
+
+[tool.bandit]
+exclude_dirs = ["tests", ".venv", "frontend", "node_modules"]

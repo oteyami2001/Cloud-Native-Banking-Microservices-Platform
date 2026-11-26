@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://novabank.example/contracts/events/FraudAlertRaised.json",
+  "title": "FraudAlertRaised",
+  "description": "NovaBank Digital FraudAlertRaised domain event (schema version 1). Synthetic data only.",
+  "type": "object",
+  "required": [
+    "event_id",
+    "event_type",
+    "schema_version",
+    "envelope_version",
+    "source",
+    "producer",
+    "entity_id",
+    "occurred_at",
+    "correlation_id",
+    "data"
+  ],
+  "properties": {
+    "event_id": {
+      "type": "string",
+      "pattern": "^EVT-[0-9A-Z]{20}$"
+    },
+    "event_type": {
+      "const": "FraudAlertRaised"
+    },
+    "schema_version": {
+      "const": "1"
+    },
+    "envelope_version": {
+      "const": "1.0"
+    },
+    "source": {
+      "const": "novabank.banking"
+    },
+    "producer": {
+      "type": "string"
+    },
+    "entity_id": {
+      "type": "string"
+    },
+    "occurred_at": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "correlation_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "deployment_version": {
+      "type": "string"
+    },
+    "data": {
+      "type": "object",
+      "required": [
+        "decision_id",
+        "transfer_id",
+        "risk_score",
+        "decision",
+        "triggered_rules",
+        "policy_version",
+        "decided_at"
+      ],
+      "properties": {
+        "decision_id": {
+          "type": "string",
+          "pattern": "^FRD-[0-9A-Z]{20}$"
+        },
+        "transfer_id": {
+          "type": "string",
+          "pattern": "^TRF-[0-9A-Z]{20}$"
+        },
+        "customer_id": {
+          "type": "string",
+          "pattern": "^CUS-[0-9A-Z]{20}$"
+        },
+        "risk_score": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "decision": {
+          "enum": [
+            "PENDING_REVIEW",
+            "REJECTED"
+          ]
+        },
+        "triggered_rules": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^FR-\\d{3}$"
+          }
+        },
+        "policy_version": {
+          "type": "string"
+        },
+        "decided_at": {
+          "type": "string"
+        },
+        "amount_minor": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "currency": {
+          "enum": [
+            "USD"
+          ]
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false
+}
