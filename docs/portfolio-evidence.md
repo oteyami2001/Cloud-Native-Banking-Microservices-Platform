@@ -53,6 +53,8 @@ Redact account IDs and other identifiers before publishing.
 | deploy-services #2 | deploy-services run #2 @ 27aeb6a | **Success**: 10 services deployed (versions 1 → 3), per-version error check clean, offline integration tests passed |
 | Live unauthenticated checks (`scripts/live_smoke.py`) | 2026-11-26 | 8/8 requests to 4 protected routes returned 401 (no token and forged `alg: none` token) — **T03 verified live** |
 
+| deploy-frontend #3 (re-run) | after deploy-role fix `3a3b85c` | **Success**: Cognito-mode SPA built (28 tests), synced to the private S3 bucket, CloudFront invalidated; landing page with sandbox banner served at the CloudFront URL (owner screenshot, 2026-11-26) |
+
 Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 
 Not yet available: service deployment run IDs, live AWS results, measured latency,
