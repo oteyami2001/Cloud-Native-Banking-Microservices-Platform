@@ -1,0 +1,16 @@
+flowchart LR
+  subgraph tx[Committed in the business transaction]
+    led[ledger / transfer / fraud / account / customer] -->|Put outbox item PENDING| ob[(outbox table)]
+  end
+  ob -->|Streams INSERT, retries ≤5, bisect| pub[outbox-publisher]
+  pub -->|PutEvents per-entry check| bus{{novabank events bus}}
+  pub -->|failed entries| bif[batchItemFailures → retry]
+  pub -->|exhausted| sf[[stream-failures SQS]]
+  sched[every 5 min] --> orec[outbox-reconciliation<br/>PendingIndex query] --> bus
+  orec -->|10 attempts| dead[(status FAILED_PUBLISH<br/>retained + alarm)]
+  bus -->|rule| qn[[notification queue]] -->|maxReceive 5| dlqn[[DLQ]]
+  bus -->|rule| qa[[audit queue]] -->|maxReceive 5| dlqa[[DLQ]]
+  bus -->|undeliverable| ddlq[[delivery DLQ]]
+  bus --> arch[(archive 30 d → replay)]
+  qn --> n[notification λ<br/>idempotent on event_id]
+  qa --> a[audit λ<br/>idempotent on event_id]

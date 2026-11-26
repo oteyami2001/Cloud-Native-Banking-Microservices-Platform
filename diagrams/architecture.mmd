@@ -1,0 +1,45 @@
+%% NovaBank Digital — serverless MVP (logical view; not an IAM/network trust diagram)
+flowchart LR
+  user([Customer / Reviewer browser]) -->|HTTPS| cf[CloudFront + OAC<br/>security headers]
+  cf --> s3site[(S3 private<br/>frontend bucket)]
+  user -->|OAuth 2.0 code + PKCE| cog[Cognito user pool<br/>MFA · groups · scopes]
+  user -->|HTTPS + access token| api[API Gateway HTTP API<br/>JWT authorizer · throttling]
+  api --> cust[customer λ]
+  api --> acct[account λ]
+  api --> trf[transfer λ]
+  api --> frd[fraud λ<br/>admin alerts]
+  api --> aud[audit λ<br/>admin reports]
+  api --> ntf[notification λ]
+  acct -- invoke --> led[ledger λ<br/>ONLY writer of balances]
+  trf -- invoke --> frd
+  trf -- invoke --> acct
+  trf -- invoke --> led
+  subgraph ddb[DynamoDB on-demand]
+    tC[(customers)]:::t
+    tA[(accounts)]:::t
+    tL[(ledger)]:::t
+    tT[(transactions)]:::t
+    tI[(idempotency)]:::t
+    tF[(fraud)]:::t
+    tO[(outbox<br/>stream)]:::t
+    tN[(notifications)]:::t
+    tU[(audit)]:::t
+  end
+  cust --> tC
+  acct --> tA
+  led --> tL & tI & tO
+  led -. state guard .-> tT
+  trf --> tT & tI
+  frd --> tF
+  tO -->|DynamoDB Streams| pub[outbox-publisher λ]
+  pub --> eb{{EventBridge bus<br/>+ archive}}
+  eb --> qn[[SQS notification + DLQ]] --> ntf
+  eb --> qa[[SQS audit + DLQ]] --> aud
+  ntf --> tN
+  ntf -->|fraud alerts| sns[[SNS ops]]
+  aud --> tU
+  aud --> ev[(S3 evidence<br/>versioned · SSE-KMS)]
+  sched[EventBridge schedules] --> orec[outbox-reconciliation λ] --> eb
+  sched --> lrec[ledger-reconciliation λ] --> ev
+  cw[CloudWatch logs · EMF metrics · alarms · dashboard · X-Ray] -.-> sns
+  classDef t fill:#e6f4f1,stroke:#0f766e

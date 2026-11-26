@@ -38,6 +38,13 @@ jobs:
           directory: terraform
           framework: terraform
           config_file: .checkov.yaml
+      - name: Insecure Terraform is blocked (T25 negative test)
+        run: |
+          pip install checkov==3.2.469
+          if checkov -d tests/terraform/fixtures/insecure --framework terraform --compact --quiet; then
+            echo "::error::Checkov did not block the insecure fixture"; exit 1
+          fi
+          echo "Checkov correctly blocked the insecure fixture." >> "$GITHUB_STEP_SUMMARY"
       - uses: terraform-linters/setup-tflint@90f302c255ef959cbfb4bd10581afecdb7ece3e6 # v4.1.1
         with:
           tflint_version: v0.58.0

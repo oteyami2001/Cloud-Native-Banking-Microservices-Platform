@@ -1,0 +1,8 @@
+flowchart TD
+  a[Alarm or reconciliation discrepancy] --> c{Classify}
+  c -->|bad release| r1[Move alias live → previous version] --> v
+  c -->|ledger discrepancy| f[Freeze accounts] --> i[Investigate entries + CloudTrail] --> comp[Compensating journal, 2-person approval] --> v
+  c -->|stuck transfer| rd[resume_posting — idempotent] --> v
+  c -->|DLQ / outbox| q[Fix cause → redrive DLQ / outbox reconciliation] --> v
+  c -->|data loss| p[PITR restore all financial tables to same T] --> val[Reconcile restored copy] --> sw[Switch / copy back] --> v
+  v[Run reconciliation = BALANCED · alarms OK] --> rec[Record measured timings in portfolio-evidence.md]

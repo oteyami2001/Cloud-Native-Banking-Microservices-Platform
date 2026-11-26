@@ -1,0 +1,12 @@
+flowchart LR
+  pr[Pull request] --> ci[ci.yml<br/>ruff · pytest 170+ · tf validate/test · frontend]
+  pr --> sec[security-scan.yml<br/>bandit · pip-audit · checkov · tflint · gitleaks · zizmor · CodeQL]
+  pr --> plan[terraform-plan.yml<br/>read-only role]
+  main[Merge to main] --> build[build-services.yml<br/>reproducible zips · SHA-256 manifest · SBOM · provenance]
+  plan -->|artifact + sha256 + commit| apply[terraform-apply.yml<br/>env dev approval · verify integrity]
+  build -->|run id| deploy[deploy-services.yml<br/>verify attestations · publish versions · move alias · smoke · alarms]
+  deploy -->|failure| rb[automatic alias rollback]
+  deploy --> it[integration-tests.yml]
+  sched1[schedule] --> rec[reconciliation.yml]
+  sched2[schedule] --> drift[drift-detection.yml]
+  manual[manual + phrase + approval] --> cleanup[cleanup.yml → verify_cleanup.sh]

@@ -1,0 +1,32 @@
+flowchart TB
+  subgraph internet[Untrusted: Internet]
+    b[Browser SPA]
+    gh[GitHub-hosted runners]
+  end
+  subgraph edge[AWS edge / managed authn]
+    cf[CloudFront]
+    cog[Cognito]
+    api[API Gateway JWT authorizer]
+  end
+  subgraph app[Application trust zone — one IAM role per function, permissions boundary]
+    svc[customer · account · transfer · fraud · notification · audit]
+    led[ledger — sole balance writer]
+  end
+  subgraph data[Data zone]
+    ddb[(DynamoDB)]
+    ev[(S3 evidence — writes only audit/reconciliation roles)]
+  end
+  subgraph cicd[CI/CD identities — GitHub OIDC]
+    plan[plan role — read-only, PRs allowed]
+    apply[apply role — env: dev, approval]
+    deploy[deploy role — env: dev, approval]
+    clean[cleanup role — env: cleanup, approval + phrase]
+  end
+  b -- TLS --> cf
+  b -- TLS --> cog
+  b -- TLS + access token --> api
+  api -- invoke alias live --> svc
+  svc -- lambda:InvokeFunction (named callers only) --> led
+  svc & led --> ddb
+  svc --> ev
+  gh -- OIDC sub=repo:...:environment:* --> plan & apply & deploy & clean

@@ -1,0 +1,33 @@
+sequenceDiagram
+  autonumber
+  participant C as Customer (SPA)
+  participant G as API Gateway (JWT)
+  participant T as transfer λ
+  participant I as idempotency table
+  participant A as account λ
+  participant F as fraud λ
+  participant L as ledger λ
+  participant D as DynamoDB (TransactWriteItems)
+  C->>G: POST /v1/transfers + Idempotency-Key ($250.00 = 25000)
+  G->>T: verified claims (sub, scope)
+  T->>T: strict validation; customer_id from IDENTITY#sub
+  T->>I: conditional put CUSTOMER#id / REQUEST#key (IN_PROGRESS, request_hash)
+  alt key exists
+    I-->>T: same hash → stored outcome / different hash → 422
+  end
+  T->>A: get_for_transfer(source, destination)
+  A-->>T: owner, status, currency
+  T->>D: put transfer SCREENING + outbox TransferRequested
+  T->>F: screen(transfer, context)
+  F-->>T: decision, score, rules, policy_version (stored server-side)
+  alt REJECTED / PENDING_REVIEW
+    T->>D: state → REJECTED / PENDING_REVIEW + outbox event (no balance change)
+  else APPROVED
+    T->>D: state → APPROVED_FOR_POSTING
+    T->>L: post_transfer(transfer_id = journal_id)
+    L->>D: ONE transaction: source -= 25000 if ≥ 25000 & ACTIVE & owner & USD;<br/>dest += 25000 if ACTIVE & USD; 2 immutable entries; journal header (not exists);<br/>POSTING#id (not exists); transfer APPROVED_FOR_POSTING→COMPLETED; outbox TransferCompleted
+    D-->>L: all-or-nothing
+    L-->>T: posted (or replayed)
+  end
+  T->>I: complete(response)
+  T-->>C: 201 COMPLETED / 202 PENDING_REVIEW / 422

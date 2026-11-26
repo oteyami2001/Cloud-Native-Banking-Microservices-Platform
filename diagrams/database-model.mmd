@@ -1,0 +1,19 @@
+erDiagram
+  CUSTOMERS ||--o{ ACCOUNTS : owns
+  ACCOUNTS ||--|| LEDGER_BALANCE : "balance (ledger-owned)"
+  LEDGER_BALANCE ||--o{ LEDGER_ENTRY : "ENTRY#ts#journal#n"
+  JOURNAL_HEADER ||--|{ LEDGER_ENTRY : "balanced lines"
+  TRANSFERS ||--o| JOURNAL_HEADER : "journal_id = transfer_id"
+  TRANSFERS ||--o| FRAUD_DECISION : screened_by
+  CUSTOMERS ||--o{ IDEMPOTENCY : "REQUEST#key"
+  JOURNAL_HEADER ||--|| POSTING_RECORD : "POSTING#journal"
+  OUTBOX }o--|| JOURNAL_HEADER : "committed with"
+  CUSTOMERS { string PK "CUSTOMER#id | IDENTITY#sub" string SK "PROFILE | CUSTOMER" }
+  ACCOUNTS { string PK "ACCOUNT#id" string SK "METADATA" string GSI1PK "CUSTOMER#id" }
+  LEDGER_BALANCE { string PK "ACCOUNT#id" string SK "BALANCE" int available_balance_minor int version string status }
+  LEDGER_ENTRY { string PK "ACCOUNT#id" string SK "ENTRY#..." string side int amount_minor int signed_amount_minor }
+  JOURNAL_HEADER { string PK "JOURNAL#id" string SK "HEADER" list lines string journal_hash }
+  TRANSFERS { string PK "TRANSFER#id" string SK "METADATA" string status string request_fingerprint }
+  IDEMPOTENCY { string PK "CUSTOMER#id | POSTING#journal" string SK "REQUEST#key | LEDGER" string request_hash }
+  FRAUD_DECISION { string PK "CUSTOMER#id" string SK "DECISION#ts#id" int risk_score string policy_version }
+  OUTBOX { string PK "EVENT#id" string SK "METADATA" string status string pending_since }
