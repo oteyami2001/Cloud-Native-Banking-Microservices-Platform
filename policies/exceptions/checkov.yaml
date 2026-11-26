@@ -33,7 +33,7 @@ exceptions:
     review_by: 2027-03-31
   - check_id: CKV2_AWS_42
     scope: frontend CloudFront distribution
-    reason: No custom domain in the MVP (Route 53 optional). Default certificate with TLSv1.2_2021 minimum.
+    reason: No custom domain in the MVP (Route 53 optional). Default *.cloudfront.net certificate.
     review_by: 2027-03-31
   - check_id: CKV2_AWS_47
     scope: frontend CloudFront distribution
@@ -98,4 +98,8 @@ exceptions:
   - check_id: CKV_AWS_26
     scope: ops alerts SNS topic
     reason: CloudWatch alarms cannot publish to topics encrypted with the AWS managed alias/aws/sns key; alarm payloads contain no customer data. Customer managed key is the prod option (~USD 1/month).
+    review_by: 2027-03-31
+  - check_id: CKV_AWS_174
+    scope: frontend CloudFront distribution
+    reason: The default *.cloudfront.net certificate always uses CloudFront's default security policy (TLSv1); TLSv1.2_2021 needs a custom domain and ACM certificate (prod reference). Static synthetic site only; the API (API Gateway) is TLS 1.2+.
     review_by: 2027-03-31

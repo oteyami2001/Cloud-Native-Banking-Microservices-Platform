@@ -30,7 +30,7 @@ run "private_origin_https_only" {
     error_message = "Origin Access Control must sign every request."
   }
   assert {
-    condition     = aws_cloudfront_distribution.site.viewer_certificate[0].minimum_protocol_version == "TLSv1.2_2021"
-    error_message = "TLS 1.2+ required."
+    condition     = aws_cloudfront_distribution.site.viewer_certificate[0].cloudfront_default_certificate && aws_cloudfront_distribution.site.viewer_certificate[0].minimum_protocol_version == "TLSv1"
+    error_message = "Default certificate must declare AWS's effective policy (TLSv1) to avoid permanent drift."
   }
 }

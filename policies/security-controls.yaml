@@ -43,7 +43,7 @@ controls:
     status: designed
   - id: BANK-SEC-007
     name: Transport security
-    implementation: HTTPS-only API Gateway and CloudFront (TLSv1.2_2021); S3 and SQS policies deny non-TLS requests; HSTS headers.
+    implementation: HTTPS-only API Gateway (TLS 1.2+) and CloudFront (redirect-to-https; default certificate policy, TLS 1.2 minimum requires custom domain + ACM); S3 and SQS policies deny non-TLS requests; HSTS headers.
     evidence: [terraform/modules/frontend/main.tf, terraform/modules/evidence-store/main.tf, shared/http.py]
     tests: [terraform/modules/frontend/tests/frontend.tftest.hcl]
     status: designed

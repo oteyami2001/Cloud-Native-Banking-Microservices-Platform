@@ -42,6 +42,7 @@ Redact account IDs and other identifiers before publishing.
 | terraform-plan | [45898457409](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45898457409) | `Plan: 182 to add, 0 to change, 0 to destroy` @ 748628d |
 | terraform-apply (approved) | [45898915092](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45898915092) | **Partial**: plan integrity verified, most resources created; 10 Lambda functions (and dependants) failed — placeholder zip generated at plan time was absent on the apply runner |
 | Fix | — | Committed deterministic `placeholder.zip`; regression test forbids plan-time generated files |
+| terraform-plan (resume) | [45901933153](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45901933153) | `61 to add, 2 to change, 0 to destroy`; review found the 2 changes were a permanent CloudFront TLS diff (default certificate cannot enforce TLSv1.2) — config corrected to AWS's effective value and exception documented before applying |
 
 Not yet available: deployment run IDs, live AWS results, measured latency,
 measured RTO/RPO, actual costs.

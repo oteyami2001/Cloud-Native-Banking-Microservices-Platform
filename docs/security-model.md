@@ -18,7 +18,7 @@ Machine-readable catalogue: [`policies/security-controls.yaml`](../policies/secu
 
 ## Data protection
 Encryption at rest everywhere (DynamoDB AWS-owned key, S3 SSE-KMS / SSE-S3 for public static
-assets, SQS SSE, SNS aws/sns). TLS-only bucket and queue policies; CloudFront TLS 1.2+ and HSTS.
+assets, SQS SSE, SNS ops topic unencrypted by design — see CKV_AWS_26). TLS-only bucket and queue policies; HSTS; API Gateway endpoints are TLS 1.2+. The CloudFront site uses the default `*.cloudfront.net` certificate, which applies CloudFront's default security policy (TLSv1); enforcing TLSv1.2_2021 requires a custom domain with an ACM certificate (production reference, catalogued exception CKV_AWS_174).
 No secrets exist in the application (public client, IAM roles); Secrets Manager reserved.
 Logs redact sensitive keys; tokens and bodies are never logged.
 

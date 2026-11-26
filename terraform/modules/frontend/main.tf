@@ -91,7 +91,8 @@ resource "aws_cloudfront_response_headers_policy" "security" {
 }
 
 resource "aws_cloudfront_distribution" "site" {
-  #checkov:skip=CKV2_AWS_42:No custom domain in MVP; default CloudFront certificate with TLS 1.2 minimum
+  #checkov:skip=CKV2_AWS_42:No custom domain in MVP; default CloudFront certificate
+  #checkov:skip=CKV_AWS_174:Default CloudFront certificate cannot enforce TLS 1.2; requires custom domain + ACM (prod)
   #checkov:skip=CKV2_AWS_47:WAF optional pending cost approval (web_acl_arn variable)
   #checkov:skip=CKV_AWS_310:Single S3 origin; static site can be redeployed
   #checkov:skip=CKV_AWS_374:Synthetic demo intended for global portfolio reviewers
@@ -138,9 +139,14 @@ resource "aws_cloudfront_distribution" "site" {
     }
   }
 
+  # With the default *.cloudfront.net certificate CloudFront always applies its
+  # default security policy (reported as TLSv1); a minimum of TLSv1.2_2021 can only
+  # be enforced with a custom domain + ACM certificate. Declaring TLSv1.2 here
+  # caused a permanent plan diff (first dev apply, 2026-11-26), so the real value
+  # is declared and the gap is documented (docs/security-model.md).
   viewer_certificate {
     cloudfront_default_certificate = true
-    minimum_protocol_version       = "TLSv1.2_2021"
+    minimum_protocol_version       = "TLSv1"
   }
 }
 

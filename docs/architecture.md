@@ -22,7 +22,7 @@ flowchart LR
 ## Components
 | Layer | Service | Notes |
 |---|---|---|
-| Edge | CloudFront (OAC, security headers, TLS 1.2+) | Optional WAF (`web_acl_arn`); WAF cannot attach to an HTTP API directly, so API abuse controls are stage throttling + validation |
+| Edge | CloudFront (OAC, security headers, HTTPS-only; TLS 1.2 minimum needs a custom domain + ACM, not in MVP) | Optional WAF (`web_acl_arn`); WAF cannot attach to an HTTP API directly, so API abuse controls are stage throttling + validation |
 | Identity | Cognito | Code + PKCE, MFA, scopes, groups |
 | API | API Gateway HTTP API | 16 routes, JWT on every route, throttling 25 rps / burst 50 (dev), access logs without headers |
 | Compute | 10 Lambda functions (arm64, Python 3.13) | One role each, permissions boundary, X-Ray active, `live` alias |
