@@ -36,6 +36,24 @@ run "separate_roles_bound_to_repo_and_environments" {
     condition     = length(aws_iam_openid_connect_provider.github) == 1
     error_message = "Provider is created when none exists."
   }
+  assert {
+    condition     = toset(keys(aws_iam_role_policy.state)) == toset(["apply", "cleanup"])
+    error_message = "Only apply and cleanup may write Terraform state."
+  }
+  assert {
+    condition = anytrue([
+      for st in data.aws_iam_policy_document.state_plan.statement :
+      st.effect == "Deny" && contains(st.actions, "s3:GetObject")
+    ])
+    error_message = "The plan role must be denied object reads outside the project state."
+  }
+  assert {
+    condition = alltrue([
+      for st in data.aws_iam_policy_document.state_plan.statement :
+      contains(coalesce(st.actions, []), "s3:PutObject") ? alltrue([for r in st.resources : endswith(r, ".tflock")]) : true
+    ])
+    error_message = "The plan role may only write lock files."
+  }
 }
 
 run "reuses_existing_provider" {

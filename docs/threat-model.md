@@ -35,3 +35,12 @@ Trust boundaries: [`diagrams/trust-boundaries.mmd`](../diagrams/trust-boundaries
 * Single region; no multi-region DR claimed.
 * Hot partitions under extreme single-account load.
 * The deploy role can update any `novabank-*` function in the region (scoped by name prefix).
+* The **apply/cleanup roles are effectively administrator-equivalent within the project scope**:
+  they can create `novabank-*` IAM roles with inline policies, so a malicious workflow change
+  running under them could escalate. Mitigations: usable only from the protected `dev`/`cleanup`
+  environments with a required human reviewer, branch restriction to `main`, plan-integrity
+  verification, and no access to `novabank-github-*` roles. A stricter design would require a
+  permissions boundary condition on `iam:CreateRole` and lock the boundary policy (future work).
+* The plan role (reachable from same-repository pull requests) can read project state and write
+  only lock files; reading S3 objects outside the project state is explicitly denied (fixed after
+  reviewing the first bootstrap plan, 2026-11-26).

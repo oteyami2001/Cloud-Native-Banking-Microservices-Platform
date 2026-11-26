@@ -76,10 +76,45 @@ data "aws_iam_policy_document" "state" {
 }
 
 resource "aws_iam_role_policy" "state" {
-  for_each = toset(["plan", "apply", "cleanup"])
+  for_each = toset(["apply", "cleanup"])
   name     = "terraform-state"
   role     = aws_iam_role.github[each.key].id
   policy   = data.aws_iam_policy_document.state.json
+}
+
+# The plan role is reachable from pull requests, so it may READ state but only
+# write/delete the native S3 lock objects (<key>.tflock) that a plan creates.
+data "aws_iam_policy_document" "state_plan" {
+  statement {
+    sid       = "StateBucket"
+    actions   = ["s3:ListBucket"]
+    resources = ["arn:aws:s3:::${var.state_bucket}"]
+  }
+  statement {
+    sid       = "ReadState"
+    actions   = ["s3:GetObject"]
+    resources = ["arn:aws:s3:::${var.state_bucket}/${var.state_key_prefix}*"]
+  }
+  statement {
+    sid       = "LockFilesOnly"
+    actions   = ["s3:PutObject", "s3:DeleteObject"]
+    resources = ["arn:aws:s3:::${var.state_bucket}/${var.state_key_prefix}*.tflock"]
+  }
+  # ReadOnlyAccess would otherwise allow reading every S3 object in the account
+  # (including other projects' Terraform state). Plans only need bucket
+  # configuration, never object contents outside this project's state.
+  statement {
+    sid           = "DenyObjectReadsOutsideProjectState"
+    effect        = "Deny"
+    actions       = ["s3:GetObject", "s3:GetObjectVersion"]
+    not_resources = ["arn:aws:s3:::${var.state_bucket}/${var.state_key_prefix}*"]
+  }
+}
+
+resource "aws_iam_role_policy" "state_plan" {
+  name   = "terraform-state-read"
+  role   = aws_iam_role.github["plan"].id
+  policy = data.aws_iam_policy_document.state_plan.json
 }
 
 # Apply/cleanup need broad create rights on project resources. They are
