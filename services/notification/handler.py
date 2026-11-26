@@ -38,16 +38,36 @@ def _messages(event: dict[str, Any]) -> list[tuple[str, str, str]]:
     et = event["event_type"]
     amount = f"${format_minor(d['amount_minor'])}" if "amount_minor" in d else ""
     if et == "TransferCompleted":
-        out = [(d["source_customer_id"], "Transfer completed", f"Your transfer of {amount} to ****{d['destination_account_id'][-4:]} was completed.")]
+        out = [
+            (
+                d["source_customer_id"],
+                "Transfer completed",
+                f"Your transfer of {amount} to ****{d['destination_account_id'][-4:]} was completed.",
+            )
+        ]
         if d.get("destination_customer_id") and d["destination_customer_id"] != d["source_customer_id"]:
-            out.append((d["destination_customer_id"], "Money received", f"You received {amount} into ****{d['destination_account_id'][-4:]}."))
+            out.append(
+                (d["destination_customer_id"], "Money received", f"You received {amount} into ****{d['destination_account_id'][-4:]}.")
+            )
         elif d.get("destination_customer_id"):
             out[0] = (d["source_customer_id"], "Transfer completed", f"You moved {amount} between your accounts.")
         return out
     if et == "TransferRejected":
-        return [(d["customer_id"], "Transfer not completed", f"Your transfer of {amount} was not completed ({d.get('reason_code', 'DECLINED')}).")]
+        return [
+            (
+                d["customer_id"],
+                "Transfer not completed",
+                f"Your transfer of {amount} was not completed ({d.get('reason_code', 'DECLINED')}).",
+            )
+        ]
     if et == "TransferPendingReview":
-        return [(d["customer_id"], "Transfer under review", f"Your transfer of {amount} is being reviewed by our security team. No money has moved yet.")]
+        return [
+            (
+                d["customer_id"],
+                "Transfer under review",
+                f"Your transfer of {amount} is being reviewed by our security team. No money has moved yet.",
+            )
+        ]
     if et == "AccountCreated":
         return [(d["customer_id"], "Account opened", f"Your synthetic {d['account_type'].lower()} account is ready.")]
     if et == "CustomerCreated":
@@ -87,7 +107,9 @@ def handle_event(event: dict[str, Any]) -> None:
         aws.client("sns").publish(
             TopicArn=topic,
             Subject="NovaBank fraud alert (synthetic)",
-            Message=json.dumps({"transfer_id": d["transfer_id"], "decision": d["decision"], "risk_score": d["risk_score"], "rules": d["triggered_rules"]}),
+            Message=json.dumps(
+                {"transfer_id": d["transfer_id"], "decision": d["decision"], "risk_score": d["risk_score"], "rules": d["triggered_rules"]}
+            ),
         )
 
 

@@ -18,9 +18,11 @@ from shared.errors import ForbiddenError
 
 
 def customer_id_for(principal: Principal, *, required: bool = True) -> str | None:
-    item = aws.table(tables().customers).get_item(
-        Key={"PK": f"IDENTITY#{principal.subject}", "SK": "CUSTOMER"}, ConsistentRead=True
-    ).get("Item")
+    item = (
+        aws.table(tables().customers)
+        .get_item(Key={"PK": f"IDENTITY#{principal.subject}", "SK": "CUSTOMER"}, ConsistentRead=True)
+        .get("Item")
+    )
     if not item:
         if required:
             raise ForbiddenError("Customer profile has not been created for this identity")

@@ -34,7 +34,7 @@ def process_batch(event: dict[str, Any], fn: Callable[[dict[str, Any]], None], s
             envelope = unwrap(record)
             set_correlation_id(envelope.get("correlation_id"))
             fn(envelope)
-        except Exception:  # noqa: BLE001 - every failure must be retried, not dropped
+        except Exception:
             logger.exception("message.failed", extra={"fields": {"message_id": record.get("messageId")}})
             failures.append({"itemIdentifier": record["messageId"]})
     log(logger, logging.INFO, "batch.processed", records=len(event.get("Records", [])), failures=len(failures))

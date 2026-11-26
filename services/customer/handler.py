@@ -69,7 +69,19 @@ def create_customer(req: Request) -> tuple[int, Any]:
     try:
         aws.dynamodb_client().transact_write_items(
             TransactItems=[
-                {"Put": {"TableName": t.customers, "Item": {"PK": f"IDENTITY#{req.principal.subject}", "SK": "CUSTOMER", "customer_id": customer_id, "status": "ACTIVE", "created_at": now}, "ConditionExpression": "attribute_not_exists(PK)"}},
+                {
+                    "Put": {
+                        "TableName": t.customers,
+                        "Item": {
+                            "PK": f"IDENTITY#{req.principal.subject}",
+                            "SK": "CUSTOMER",
+                            "customer_id": customer_id,
+                            "status": "ACTIVE",
+                            "created_at": now,
+                        },
+                        "ConditionExpression": "attribute_not_exists(PK)",
+                    }
+                },
                 {"Put": {"TableName": t.customers, "Item": profile, "ConditionExpression": "attribute_not_exists(PK)"}},
                 {"Put": {"TableName": t.outbox, "Item": outbox_item(event)}},
             ]
@@ -83,9 +95,7 @@ def create_customer(req: Request) -> tuple[int, Any]:
 
 def _load(req: Request) -> dict[str, Any]:
     customer_id = customer_id_for(req.principal)
-    item = aws.table(tables().customers).get_item(
-        Key={"PK": f"CUSTOMER#{customer_id}", "SK": "PROFILE"}, ConsistentRead=True
-    ).get("Item")
+    item = aws.table(tables().customers).get_item(Key={"PK": f"CUSTOMER#{customer_id}", "SK": "PROFILE"}, ConsistentRead=True).get("Item")
     if not item:
         raise NotFoundError("Customer profile not found")
     return aws.to_native(item)

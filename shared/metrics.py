@@ -20,9 +20,7 @@ def emit(metric: str, value: float = 1, *, unit: str = "Count", **dimensions: st
     doc = {
         "_aws": {
             "Timestamp": int(time.time() * 1000),
-            "CloudWatchMetrics": [
-                {"Namespace": NAMESPACE, "Dimensions": [sorted(dims)], "Metrics": [{"Name": metric, "Unit": unit}]}
-            ],
+            "CloudWatchMetrics": [{"Namespace": NAMESPACE, "Dimensions": [sorted(dims)], "Metrics": [{"Name": metric, "Unit": unit}]}],
         },
         metric: value,
         **dims,

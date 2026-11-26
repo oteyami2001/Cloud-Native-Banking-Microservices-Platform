@@ -46,9 +46,7 @@ def _public(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def load_account(account_id: str) -> dict[str, Any] | None:
-    item = aws.table(tables().accounts).get_item(
-        Key={"PK": f"ACCOUNT#{account_id}", "SK": "METADATA"}, ConsistentRead=True
-    ).get("Item")
+    item = aws.table(tables().accounts).get_item(Key={"PK": f"ACCOUNT#{account_id}", "SK": "METADATA"}, ConsistentRead=True).get("Item")
     return aws.to_native(item) if item else None
 
 

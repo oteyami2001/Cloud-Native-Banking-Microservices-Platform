@@ -10,7 +10,7 @@ policy_version: "2026.11.1"
 review_validity_hours: 72
 thresholds:
   pending_review_score: 40   # >= 40 -> PENDING_REVIEW (held, nothing posted)
-  reject_score: 80           # >= 80 -> REJECTED
+  reject_score: 90           # >= 90 -> REJECTED
 rules:
   - id: FR-001
     description: Large transfer (>= USD 5,000.00)
@@ -30,16 +30,16 @@ rules:
     when: { velocity_1h_gte: 10 }
   - id: FR-005
     description: First transfer to a recipient account owned by another customer
-    score: 15
+    score: 10
     when: { new_recipient: true }
   - id: FR-006
     description: New recipient combined with an amount >= USD 1,000.00
-    score: 20
+    score: 10
     when: { new_recipient: true, amount_minor_gte: 100000 }
   - id: FR-007
-    description: Source account opened less than 24 hours ago with amount >= USD 1,000.00
-    score: 25
-    when: { source_account_age_hours_lt: 24, amount_minor_gte: 100000 }
+    description: Source account opened less than 24 hours ago with amount >= USD 2,500.00
+    score: 20
+    when: { source_account_age_hours_lt: 24, amount_minor_gte: 250000 }
   - id: FR-008
     description: Customer flagged for unusual activity by an operator
     score: 30

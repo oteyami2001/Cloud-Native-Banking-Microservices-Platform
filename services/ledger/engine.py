@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import random
+import secrets
 import time
 from dataclasses import dataclass
 from typing import Any, Literal
@@ -176,14 +176,7 @@ class Ledger:
         if start_key:
             kwargs["ExclusiveStartKey"] = start_key
         result = self.ledger.query(**kwargs)
-        entries = [
-            {
-                k: v
-                for k, v in aws.to_native(item).items()
-                if k not in {"PK", "SK"}
-            }
-            for item in result.get("Items", [])
-        ]
+        entries = [{k: v for k, v in aws.to_native(item).items() if k not in {"PK", "SK"}} for item in result.get("Items", [])]
         return {"entries": entries, "last_key": result.get("LastEvaluatedKey")}
 
     # ----------------------------------------------------------------- postings
@@ -231,8 +224,19 @@ class Ledger:
             records = {ln.account_id: self.get_balance_record(ln.account_id) for ln in lines}
             posted_at = now_iso()
             items = self._build_items(
-                journal_id, journal_type, currency, lines, description, correlation_id,
-                owner_check, state_guard, event, transfer_id, jhash, posted_at, records,
+                journal_id,
+                journal_type,
+                currency,
+                lines,
+                description,
+                correlation_id,
+                owner_check,
+                state_guard,
+                event,
+                transfer_id,
+                jhash,
+                posted_at,
+                records,
             )
             try:
                 self.client.transact_write_items(TransactItems=items)
@@ -245,15 +249,25 @@ class Ledger:
                 if "TransactionConflict" in reasons and attempt < MAX_CONFLICT_RETRIES:
                     attempt += 1
                     metrics.emit("LedgerTransactionConflict")
-                    time.sleep(min(0.4, 0.02 * 2**attempt) * random.random())  # noqa: S311 - jitter only
+                    time.sleep(min(0.4, 0.02 * 2**attempt) * secrets.randbelow(1000) / 1000)  # full jitter
                     continue
-                return self._diagnose_failure(
-                    journal_id, jhash, currency, lines, owner_check, state_guard, reasons
-                )
+                return self._diagnose_failure(journal_id, jhash, currency, lines, owner_check, state_guard, reasons)
 
     def _build_items(
-        self, journal_id, journal_type, currency, lines, description, correlation_id,
-        owner_check, state_guard, event, transfer_id, jhash, posted_at, records,
+        self,
+        journal_id,
+        journal_type,
+        currency,
+        lines,
+        description,
+        correlation_id,
+        owner_check,
+        state_guard,
+        event,
+        transfer_id,
+        jhash,
+        posted_at,
+        records,
     ) -> list[dict[str, Any]]:
         t = self.t
         items: list[dict[str, Any]] = []
@@ -274,87 +288,97 @@ class Ledger:
             if owner_check and owner_check[0] == ln.account_id:
                 condition += " AND customer_id = :owner"
                 values[":owner"] = owner_check[1]
-            items.append({
-                "Update": {
-                    "TableName": t.ledger,
-                    "Key": _balance_key(ln.account_id),
-                    "UpdateExpression": "SET #b = #b + :delta, version = version + :one, updated_at = :now",
-                    "ConditionExpression": condition,
-                    "ExpressionAttributeNames": names,
-                    "ExpressionAttributeValues": values,
+            items.append(
+                {
+                    "Update": {
+                        "TableName": t.ledger,
+                        "Key": _balance_key(ln.account_id),
+                        "UpdateExpression": "SET #b = #b + :delta, version = version + :one, updated_at = :now",
+                        "ConditionExpression": condition,
+                        "ExpressionAttributeNames": names,
+                        "ExpressionAttributeValues": values,
+                    }
                 }
-            })
+            )
             counterparties = [o.account_id for o in lines if o.account_id != ln.account_id]
-            items.append({
+            items.append(
+                {
+                    "Put": {
+                        "TableName": t.ledger,
+                        "Item": {
+                            "PK": f"ACCOUNT#{ln.account_id}",
+                            "SK": f"ENTRY#{posted_at}#{journal_id}#{idx}",
+                            "entry_id": f"{journal_id}#{idx}",
+                            "journal_id": journal_id,
+                            "journal_type": journal_type,
+                            "transfer_id": transfer_id,
+                            "side": ln.side,
+                            "direction": "CREDIT" if ln.side == "C" else "DEBIT",
+                            "amount_minor": ln.amount_minor,
+                            "signed_amount_minor": delta,
+                            "currency": currency,
+                            "counterparty_account_id": counterparties[0] if len(counterparties) == 1 else None,
+                            "description": description,
+                            "posted_at": posted_at,
+                        },
+                        "ConditionExpression": "attribute_not_exists(PK)",
+                    }
+                }
+            )
+        items.append(
+            {
                 "Put": {
                     "TableName": t.ledger,
                     "Item": {
-                        "PK": f"ACCOUNT#{ln.account_id}",
-                        "SK": f"ENTRY#{posted_at}#{journal_id}#{idx}",
-                        "entry_id": f"{journal_id}#{idx}",
+                        "PK": f"JOURNAL#{journal_id}",
+                        "SK": "HEADER",
                         "journal_id": journal_id,
                         "journal_type": journal_type,
-                        "transfer_id": transfer_id,
-                        "side": ln.side,
-                        "direction": "CREDIT" if ln.side == "C" else "DEBIT",
-                        "amount_minor": ln.amount_minor,
-                        "signed_amount_minor": delta,
                         "currency": currency,
-                        "counterparty_account_id": counterparties[0] if len(counterparties) == 1 else None,
-                        "description": description,
+                        "total_minor": sum(ln.amount_minor for ln in lines if ln.side == "D"),
+                        "lines": [{"account_id": ln.account_id, "side": ln.side, "amount_minor": ln.amount_minor} for ln in lines],
+                        "transfer_id": transfer_id,
+                        "journal_hash": jhash,
+                        "correlation_id": correlation_id,
                         "posted_at": posted_at,
                     },
                     "ConditionExpression": "attribute_not_exists(PK)",
                 }
-            })
-        items.append({
-            "Put": {
-                "TableName": t.ledger,
-                "Item": {
-                    "PK": f"JOURNAL#{journal_id}",
-                    "SK": "HEADER",
-                    "journal_id": journal_id,
-                    "journal_type": journal_type,
-                    "currency": currency,
-                    "total_minor": sum(ln.amount_minor for ln in lines if ln.side == "D"),
-                    "lines": [{"account_id": ln.account_id, "side": ln.side, "amount_minor": ln.amount_minor} for ln in lines],
-                    "transfer_id": transfer_id,
-                    "journal_hash": jhash,
-                    "correlation_id": correlation_id,
-                    "posted_at": posted_at,
-                },
-                "ConditionExpression": "attribute_not_exists(PK)",
             }
-        })
-        items.append({
-            "Put": {
-                "TableName": t.idempotency,
-                "Item": {
-                    "PK": f"POSTING#{journal_id}",
-                    "SK": "LEDGER",
-                    "journal_hash": jhash,
-                    "status": "POSTED",
-                    "posted_at": posted_at,
-                },
-                "ConditionExpression": "attribute_not_exists(PK)",
-            }
-        })
-        if state_guard:
-            items.append({
-                "Update": {
-                    "TableName": t.transfers,
-                    "Key": {"PK": f"TRANSFER#{state_guard.transfer_id}", "SK": "METADATA"},
-                    "UpdateExpression": "SET #s = :new, posted_at = :now, journal_id = :j, updated_at = :now",
-                    "ConditionExpression": "#s = :expected",
-                    "ExpressionAttributeNames": {"#s": "status"},
-                    "ExpressionAttributeValues": {
-                        ":new": state_guard.new_status,
-                        ":expected": state_guard.expected_status,
-                        ":now": posted_at,
-                        ":j": journal_id,
+        )
+        items.append(
+            {
+                "Put": {
+                    "TableName": t.idempotency,
+                    "Item": {
+                        "PK": f"POSTING#{journal_id}",
+                        "SK": "LEDGER",
+                        "journal_hash": jhash,
+                        "status": "POSTED",
+                        "posted_at": posted_at,
                     },
+                    "ConditionExpression": "attribute_not_exists(PK)",
                 }
-            })
+            }
+        )
+        if state_guard:
+            items.append(
+                {
+                    "Update": {
+                        "TableName": t.transfers,
+                        "Key": {"PK": f"TRANSFER#{state_guard.transfer_id}", "SK": "METADATA"},
+                        "UpdateExpression": "SET #s = :new, posted_at = :now, journal_id = :j, updated_at = :now",
+                        "ConditionExpression": "#s = :expected",
+                        "ExpressionAttributeNames": {"#s": "status"},
+                        "ExpressionAttributeValues": {
+                            ":new": state_guard.new_status,
+                            ":expected": state_guard.expected_status,
+                            ":now": posted_at,
+                            ":j": journal_id,
+                        },
+                    }
+                }
+            )
         if event:
             event_type, data = event
             envelope = build_event(
@@ -468,5 +492,8 @@ class Ledger:
             description=f"Reversal of {transfer_id}: {reason[:120]}",
             correlation_id=correlation_id,
             transfer_id=transfer_id,
-            event=("TransferReversed", {"transfer_id": transfer_id, "amount_minor": amount, "currency": header["currency"], "operator": operator}),
+            event=(
+                "TransferReversed",
+                {"transfer_id": transfer_id, "amount_minor": amount, "currency": header["currency"], "operator": operator},
+            ),
         )

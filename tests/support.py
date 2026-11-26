@@ -52,9 +52,16 @@ def claims(sub: str, *, scopes: str = CUSTOMER_SCOPES, groups: str = "[customers
     }
 
 
-def api_event(route_key: str, *, claims_: dict[str, Any] | None, path: dict[str, str] | None = None,
-              body: Any = None, headers: dict[str, str] | None = None, query: dict[str, str] | None = None,
-              raw_body: str | None = None) -> dict[str, Any]:
+def api_event(
+    route_key: str,
+    *,
+    claims_: dict[str, Any] | None,
+    path: dict[str, str] | None = None,
+    body: Any = None,
+    headers: dict[str, str] | None = None,
+    query: dict[str, str] | None = None,
+    raw_body: str | None = None,
+) -> dict[str, Any]:
     ctx: dict[str, Any] = {"requestId": f"req-{uuid.uuid4().hex[:16]}"}
     if claims_ is not None:
         ctx["authorizer"] = {"jwt": {"claims": claims_, "scopes": None}}
@@ -101,7 +108,9 @@ class Bank:
     def balance(self, account_id: str) -> int:
         return Ledger().get_balance(account_id)["available_balance_minor"]
 
-    def transfer(self, owner: dict[str, Any], src: str, dst: str, amount: int, *, key: str | None = None, currency: str = "USD") -> tuple[int, Any]:
+    def transfer(
+        self, owner: dict[str, Any], src: str, dst: str, amount: int, *, key: str | None = None, currency: str = "USD"
+    ) -> tuple[int, Any]:
         return self.call(
             "POST /v1/transfers",
             owner["claims"],

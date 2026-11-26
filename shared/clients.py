@@ -23,9 +23,7 @@ from shared.errors import BankingError, DependencyUnavailableError
 from shared.logging import get_correlation_id
 
 _ERRORS: dict[str, type[BankingError]] = {
-    cls.code: cls
-    for cls in vars(errors).values()
-    if isinstance(cls, type) and issubclass(cls, BankingError)
+    cls.code: cls for cls in vars(errors).values() if isinstance(cls, type) and issubclass(cls, BankingError)
 }
 
 _LOCAL_MODULES = {
@@ -53,7 +51,7 @@ class ServiceClient:
             reply = self._dispatch(request)
         except BankingError:
             raise
-        except Exception as exc:  # noqa: BLE001 - any transport failure fails closed
+        except Exception as exc:
             raise DependencyUnavailableError(f"{self.service} service unavailable") from exc
         if not isinstance(reply, dict) or "ok" not in reply:
             raise DependencyUnavailableError(f"{self.service} service returned an invalid response")

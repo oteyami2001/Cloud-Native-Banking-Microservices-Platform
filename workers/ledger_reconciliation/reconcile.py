@@ -43,7 +43,14 @@ def reconcile(ledger_items: list[dict[str, Any]], transfers: list[dict[str, Any]
     for account_id, bal in balances.items():
         expected = entry_sums.get(account_id, 0)
         if int(bal["available_balance_minor"]) != expected:
-            discrepancies.append({"check": "R1", "account_id": account_id, "balance_minor": int(bal["available_balance_minor"]), "entries_sum_minor": expected})
+            discrepancies.append(
+                {
+                    "check": "R1",
+                    "account_id": account_id,
+                    "balance_minor": int(bal["available_balance_minor"]),
+                    "entries_sum_minor": expected,
+                }
+            )
         if int(bal["available_balance_minor"]) < 0:
             discrepancies.append({"check": "R5", "account_id": account_id, "balance_minor": int(bal["available_balance_minor"])})
     for account_id in set(entry_sums) - set(balances):

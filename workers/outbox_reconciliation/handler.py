@@ -44,7 +44,9 @@ def run(now: datetime | None = None) -> dict[str, Any]:
     metrics.emit("OutboxPendingCount", len(items))
     metrics.emit("OutboxOldestPendingAgeSeconds", oldest_age, unit="Seconds")
 
-    full = {i["PK"]: aws.to_native(table.get_item(Key={"PK": i["PK"], "SK": "METADATA"}, ConsistentRead=True).get("Item") or {}) for i in items}
+    full = {
+        i["PK"]: aws.to_native(table.get_item(Key={"PK": i["PK"], "SK": "METADATA"}, ConsistentRead=True).get("Item") or {}) for i in items
+    }
     ok, failed = publish([(pk, it["payload"]) for pk, it in full.items() if it.get("status") == "PENDING"])
     for pk in ok:
         mark_published(pk)
@@ -57,11 +59,21 @@ def run(now: datetime | None = None) -> dict[str, Any]:
             update += ", #s = :failed REMOVE pending_partition"
             values[":failed"] = "FAILED_PUBLISH"
             dead.append(pk)
-        table.update_item(Key={"PK": pk, "SK": "METADATA"}, UpdateExpression=update, ExpressionAttributeValues=values,
-                          **({"ExpressionAttributeNames": {"#s": "status"}} if attempts >= MAX_ATTEMPTS else {}))
+        table.update_item(
+            Key={"PK": pk, "SK": "METADATA"},
+            UpdateExpression=update,
+            ExpressionAttributeValues=values,
+            **({"ExpressionAttributeNames": {"#s": "status"}} if attempts >= MAX_ATTEMPTS else {}),
+        )
     if dead:
         metrics.emit("OutboxEventsFailedPermanently", len(dead))
-    return {"checked": len(items), "republished": len(ok), "failed": len(failed), "dead_lettered": len(dead), "oldest_pending_age_seconds": oldest_age}
+    return {
+        "checked": len(items),
+        "republished": len(ok),
+        "failed": len(failed),
+        "dead_lettered": len(dead),
+        "oldest_pending_age_seconds": oldest_age,
+    }
 
 
 def handler(_event: dict[str, Any], _context: Any = None) -> dict[str, Any]:

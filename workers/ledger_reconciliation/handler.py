@@ -43,16 +43,41 @@ def run(now: datetime | None = None, *, trigger: str = "schedule") -> dict[str, 
     event = build_event(
         "ReconciliationCompleted",
         {k: report[k] for k in ("run_id", "status", "discrepancy_count", "accounts_checked", "journals_checked")},
-        correlation_id=run_id, producer="ledger-reconciliation", entity_id=run_id,
+        correlation_id=run_id,
+        producer="ledger-reconciliation",
+        entity_id=run_id,
     )
-    aws.dynamodb_client().transact_write_items(TransactItems=[
-        {"Put": {"TableName": t.audit, "Item": {
-            "PK": "REPORT#RECONCILIATION", "SK": f"RUN#{generated_at}#{run_id}",
-            **{k: report[k] for k in ("run_id", "status", "accounts_checked", "journals_checked", "transfers_checked", "total_assets_minor", "total_liabilities_minor", "discrepancy_count", "generated_at", "trigger")},
-            "s3_key": s3_key, "sha256": digest,
-        }}},
-        {"Put": {"TableName": t.outbox, "Item": outbox_item(event)}},
-    ])
+    aws.dynamodb_client().transact_write_items(
+        TransactItems=[
+            {
+                "Put": {
+                    "TableName": t.audit,
+                    "Item": {
+                        "PK": "REPORT#RECONCILIATION",
+                        "SK": f"RUN#{generated_at}#{run_id}",
+                        **{
+                            k: report[k]
+                            for k in (
+                                "run_id",
+                                "status",
+                                "accounts_checked",
+                                "journals_checked",
+                                "transfers_checked",
+                                "total_assets_minor",
+                                "total_liabilities_minor",
+                                "discrepancy_count",
+                                "generated_at",
+                                "trigger",
+                            )
+                        },
+                        "s3_key": s3_key,
+                        "sha256": digest,
+                    },
+                }
+            },
+            {"Put": {"TableName": t.outbox, "Item": outbox_item(event)}},
+        ]
+    )
     metrics.emit("ReconciliationDiscrepancies", report["discrepancy_count"])
     return {**report, "s3_key": s3_key, "sha256": digest}
 

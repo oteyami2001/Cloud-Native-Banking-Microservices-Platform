@@ -64,7 +64,16 @@ def _unusual(customer_id: str) -> bool:
 def screen(p: dict[str, Any]) -> dict[str, Any]:
     if os.environ.get("FRAUD_FAULT_INJECTION") == "unavailable" and os.environ.get("ENVIRONMENT", "local") in {"local", "dev"}:
         raise RuntimeError("Injected fraud service failure")
-    required = ("transfer_id", "customer_id", "source_account_id", "destination_account_id", "amount_minor", "currency", "request_fingerprint", "source_account_created_at")
+    required = (
+        "transfer_id",
+        "customer_id",
+        "source_account_id",
+        "destination_account_id",
+        "amount_minor",
+        "currency",
+        "request_fingerprint",
+        "source_account_created_at",
+    )
     missing = [k for k in required if k not in p]
     if missing:
         raise ValidationError("Screening request incomplete", details={"fields": missing})
@@ -102,16 +111,49 @@ def screen(p: dict[str, Any]) -> dict[str, Any]:
     if result.decision != "APPROVED":
         decision.update({"alert_status": "OPEN", "GSI1PK": "ALERT#OPEN", "GSI1SK": f"{now}#{decision_id}"})
     t = tables()
-    data = {k: decision[k] for k in ("decision_id", "transfer_id", "risk_score", "decision", "triggered_rules", "policy_version", "decided_at")}
+    data = {
+        k: decision[k] for k in ("decision_id", "transfer_id", "risk_score", "decision", "triggered_rules", "policy_version", "decided_at")
+    }
     items: list[dict[str, Any]] = [
         {"Put": {"TableName": t.fraud, "Item": decision, "ConditionExpression": "attribute_not_exists(PK)"}},
-        {"Put": {"TableName": t.outbox, "Item": outbox_item(build_event("FraudScreeningCompleted", data, correlation_id=get_correlation_id(), producer="fraud", entity_id=p["transfer_id"]))}},
+        {
+            "Put": {
+                "TableName": t.outbox,
+                "Item": outbox_item(
+                    build_event(
+                        "FraudScreeningCompleted", data, correlation_id=get_correlation_id(), producer="fraud", entity_id=p["transfer_id"]
+                    )
+                ),
+            }
+        },
     ]
     if result.decision != "APPROVED":
-        items.append({"Put": {"TableName": t.outbox, "Item": outbox_item(build_event("FraudAlertRaised", {**data, "customer_id": p["customer_id"], "amount_minor": int(p["amount_minor"]), "currency": p["currency"]}, correlation_id=get_correlation_id(), producer="fraud", entity_id=p["transfer_id"]))}})
+        items.append(
+            {
+                "Put": {
+                    "TableName": t.outbox,
+                    "Item": outbox_item(
+                        build_event(
+                            "FraudAlertRaised",
+                            {**data, "customer_id": p["customer_id"], "amount_minor": int(p["amount_minor"]), "currency": p["currency"]},
+                            correlation_id=get_correlation_id(),
+                            producer="fraud",
+                            entity_id=p["transfer_id"],
+                        )
+                    ),
+                }
+            }
+        )
         metrics.emit("FraudAlertRaised", Decision=result.decision)
     else:
-        items.append({"Put": {"TableName": t.fraud, "Item": {"PK": f"CUSTOMER#{p['customer_id']}", "SK": f"RECIPIENT#{p['destination_account_id']}", "first_seen_at": now}}})
+        items.append(
+            {
+                "Put": {
+                    "TableName": t.fraud,
+                    "Item": {"PK": f"CUSTOMER#{p['customer_id']}", "SK": f"RECIPIENT#{p['destination_account_id']}", "first_seen_at": now},
+                }
+            }
+        )
     aws.dynamodb_client().transact_write_items(TransactItems=items)
     metrics.emit("FraudScreening", Decision=result.decision)
     return {**data, "decision_sk": sk, "review_expires_at": expires, "correlation_id": decision["correlation_id"]}
@@ -140,12 +182,16 @@ def record_review(p: dict[str, Any]) -> dict[str, Any]:
     except aws.dynamodb_client().exceptions.ConditionalCheckFailedException as exc:
         raise InvalidStateError("Fraud alert is not open") from exc
     if outcome == "APPROVED" and p.get("destination_account_id"):
-        _table().put_item(Item={"PK": f"CUSTOMER#{p['customer_id']}", "SK": f"RECIPIENT#{p['destination_account_id']}", "first_seen_at": now})
+        _table().put_item(
+            Item={"PK": f"CUSTOMER#{p['customer_id']}", "SK": f"RECIPIENT#{p['destination_account_id']}", "first_seen_at": now}
+        )
     return {"status": "CLOSED", "review_outcome": outcome, "reviewed_at": now}
 
 
 def set_flag(p: dict[str, Any]) -> dict[str, Any]:
-    _table().put_item(Item={"PK": f"CUSTOMER#{p['customer_id']}", "SK": "FLAGS", "unusual_activity": bool(p["unusual_activity"]), "updated_at": now_iso()})
+    _table().put_item(
+        Item={"PK": f"CUSTOMER#{p['customer_id']}", "SK": "FLAGS", "unusual_activity": bool(p["unusual_activity"]), "updated_at": now_iso()}
+    )
     return {"customer_id": p["customer_id"], "unusual_activity": bool(p["unusual_activity"])}
 
 
@@ -163,7 +209,18 @@ def list_alerts(req: Request) -> tuple[int, Any]:
     if start:
         kwargs["ExclusiveStartKey"] = start
     result = _table().query(**kwargs)
-    fields = ("decision_id", "transfer_id", "risk_score", "decision", "triggered_rules", "policy_version", "decided_at", "review_expires_at", "amount_minor", "currency")
+    fields = (
+        "decision_id",
+        "transfer_id",
+        "risk_score",
+        "decision",
+        "triggered_rules",
+        "policy_version",
+        "decided_at",
+        "review_expires_at",
+        "amount_minor",
+        "currency",
+    )
     items = [{k: aws.to_native(i).get(k) for k in fields} for i in result.get("Items", [])]
     return 200, {"items": items, "next_cursor": encode_cursor(result.get("LastEvaluatedKey"))}
 

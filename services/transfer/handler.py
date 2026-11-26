@@ -44,8 +44,8 @@ from shared.errors import (
     ValidationError,
 )
 from shared.http import Request, Router
-from shared.identity import customer_id_for
 from shared.idempotency import IdempotencyStore, request_hash, validate_key
+from shared.identity import customer_id_for
 from shared.ids import new_id, now_iso, parse_iso
 from shared.money import validate_amount_minor, validate_currency
 from shared.validation import ACCOUNT_ID_PATTERN, TRANSFER_ID_PATTERN, internal_safe_string, path_id, string, validate_object
@@ -81,14 +81,16 @@ def load_transfer(transfer_id: str) -> dict[str, Any] | None:
 def fingerprint(t: dict[str, Any]) -> str:
     """Integrity hash over the immutable financial fields of a transfer."""
 
-    return request_hash({
-        "transfer_id": t["transfer_id"],
-        "customer_id": t["customer_id"],
-        "source_account_id": t["source_account_id"],
-        "destination_account_id": t["destination_account_id"],
-        "amount_minor": t["amount_minor"],
-        "currency": t["currency"],
-    })
+    return request_hash(
+        {
+            "transfer_id": t["transfer_id"],
+            "customer_id": t["customer_id"],
+            "source_account_id": t["source_account_id"],
+            "destination_account_id": t["destination_account_id"],
+            "amount_minor": t["amount_minor"],
+            "currency": t["currency"],
+        }
+    )
 
 
 def public_view(t: dict[str, Any], *, reviewer: bool = False) -> dict[str, Any]:
@@ -112,21 +114,25 @@ def public_view(t: dict[str, Any], *, reviewer: bool = False) -> dict[str, Any]:
     return view
 
 
-def _transition(transfer_id: str, expected: str, new: str, *, extra: dict[str, Any] | None = None, event: dict[str, Any] | None = None) -> None:
+def _transition(
+    transfer_id: str, expected: str, new: str, *, extra: dict[str, Any] | None = None, event: dict[str, Any] | None = None
+) -> None:
     extra = {**(extra or {}), "updated_at": now_iso()}
     names = {"#s": "status", **{f"#f{i}": k for i, k in enumerate(extra)}}
     values = {":new": new, ":expected": expected, **{f":v{i}": v for i, v in enumerate(extra.values())}}
     sets = ", ".join(["#s = :new", *[f"#f{i} = :v{i}" for i in range(len(extra))]])
-    items = [{
-        "Update": {
-            "TableName": tables().transfers,
-            "Key": _key(transfer_id),
-            "UpdateExpression": f"SET {sets}",
-            "ConditionExpression": "#s = :expected",
-            "ExpressionAttributeNames": names,
-            "ExpressionAttributeValues": values,
+    items = [
+        {
+            "Update": {
+                "TableName": tables().transfers,
+                "Key": _key(transfer_id),
+                "UpdateExpression": f"SET {sets}",
+                "ConditionExpression": "#s = :expected",
+                "ExpressionAttributeNames": names,
+                "ExpressionAttributeValues": values,
+            }
         }
-    }]
+    ]
     if event:
         items.append({"Put": {"TableName": tables().outbox, "Item": outbox_item(event)}})
     try:
@@ -160,18 +166,26 @@ def _post(t: dict[str, Any], correlation_id: str) -> tuple[int, dict[str, Any]]:
     """
 
     try:
-        clients.ledger().call("post_transfer", {
-            "transfer_id": t["transfer_id"],
-            "source_account_id": t["source_account_id"],
-            "destination_account_id": t["destination_account_id"],
-            "amount_minor": t["amount_minor"],
-            "currency": t["currency"],
-            "customer_id": t["customer_id"],
-            "correlation_id": correlation_id,
-        })
+        clients.ledger().call(
+            "post_transfer",
+            {
+                "transfer_id": t["transfer_id"],
+                "source_account_id": t["source_account_id"],
+                "destination_account_id": t["destination_account_id"],
+                "amount_minor": t["amount_minor"],
+                "currency": t["currency"],
+                "customer_id": t["customer_id"],
+                "correlation_id": correlation_id,
+            },
+        )
     except DEFINITIVE_LEDGER_ERRORS as err:
-        _transition(t["transfer_id"], "APPROVED_FOR_POSTING", "REJECTED", extra={"reason_code": err.code},
-                    event=_event("TransferRejected", t, correlation_id, reason_code=err.code, status="REJECTED"))
+        _transition(
+            t["transfer_id"],
+            "APPROVED_FOR_POSTING",
+            "REJECTED",
+            extra={"reason_code": err.code},
+            event=_event("TransferRejected", t, correlation_id, reason_code=err.code, status="REJECTED"),
+        )
         metrics.emit("TransferRejected", Reason=err.code)
         return err.status, {**err.to_body(correlation_id), "transfer": public_view(load_transfer(t["transfer_id"]) or t)}
     except InvalidStateError:
@@ -205,21 +219,29 @@ def _validate_accounts(customer_id: str, source_id: str, dest_id: str, currency:
 
 def _screen_and_post(t: dict[str, Any], source: dict[str, Any], dest: dict[str, Any], correlation_id: str) -> tuple[int, dict[str, Any]]:
     try:
-        decision = clients.fraud().call("screen", {
-            "transfer_id": t["transfer_id"],
-            "customer_id": t["customer_id"],
-            "source_account_id": t["source_account_id"],
-            "destination_account_id": t["destination_account_id"],
-            "destination_customer_id": dest["customer_id"],
-            "amount_minor": t["amount_minor"],
-            "currency": t["currency"],
-            "request_fingerprint": t["request_fingerprint"],
-            "source_account_created_at": source["created_at"],
-        })
+        decision = clients.fraud().call(
+            "screen",
+            {
+                "transfer_id": t["transfer_id"],
+                "customer_id": t["customer_id"],
+                "source_account_id": t["source_account_id"],
+                "destination_account_id": t["destination_account_id"],
+                "destination_customer_id": dest["customer_id"],
+                "amount_minor": t["amount_minor"],
+                "currency": t["currency"],
+                "request_fingerprint": t["request_fingerprint"],
+                "source_account_created_at": source["created_at"],
+            },
+        )
     except BankingError as err:
         # Fail closed: without a screening decision nothing may be posted.
-        _transition(t["transfer_id"], "SCREENING", "FAILED", extra={"reason_code": "FRAUD_SCREENING_UNAVAILABLE"},
-                    event=_event("TransferRejected", t, correlation_id, reason_code="FRAUD_SCREENING_UNAVAILABLE", status="FAILED"))
+        _transition(
+            t["transfer_id"],
+            "SCREENING",
+            "FAILED",
+            extra={"reason_code": "FRAUD_SCREENING_UNAVAILABLE"},
+            event=_event("TransferRejected", t, correlation_id, reason_code="FRAUD_SCREENING_UNAVAILABLE", status="FAILED"),
+        )
         metrics.emit("TransferFailedClosed")
         failure = DependencyUnavailableError("Fraud screening unavailable; the transfer was not posted")
         failure.details = {"cause": err.code}
@@ -234,13 +256,26 @@ def _screen_and_post(t: dict[str, Any], source: dict[str, Any], dest: dict[str, 
         "policy_version": decision["policy_version"],
     }
     if decision["decision"] == "REJECTED":
-        _transition(t["transfer_id"], "SCREENING", "REJECTED", extra={**fraud_fields, "reason_code": "FRAUD_POLICY"},
-                    event=_event("TransferRejected", t, correlation_id, reason_code="FRAUD_POLICY", status="REJECTED"))
+        _transition(
+            t["transfer_id"],
+            "SCREENING",
+            "REJECTED",
+            extra={**fraud_fields, "reason_code": "FRAUD_POLICY"},
+            event=_event("TransferRejected", t, correlation_id, reason_code="FRAUD_POLICY", status="REJECTED"),
+        )
         metrics.emit("TransferRejected", Reason="FRAUD_POLICY")
-        return 422, {"error": {"code": "TRANSFER_REJECTED", "message": "Transfer was declined by risk screening", "correlation_id": correlation_id}, "transfer": public_view(load_transfer(t["transfer_id"]))}
+        return 422, {
+            "error": {"code": "TRANSFER_REJECTED", "message": "Transfer was declined by risk screening", "correlation_id": correlation_id},
+            "transfer": public_view(load_transfer(t["transfer_id"])),
+        }
     if decision["decision"] == "PENDING_REVIEW":
-        _transition(t["transfer_id"], "SCREENING", "PENDING_REVIEW", extra={**fraud_fields, "review_queue": "PENDING_REVIEW"},
-                    event=_event("TransferPendingReview", t, correlation_id, status="PENDING_REVIEW", risk_score=decision["risk_score"]))
+        _transition(
+            t["transfer_id"],
+            "SCREENING",
+            "PENDING_REVIEW",
+            extra={**fraud_fields, "review_queue": "PENDING_REVIEW"},
+            event=_event("TransferPendingReview", t, correlation_id, status="PENDING_REVIEW", risk_score=decision["risk_score"]),
+        )
         metrics.emit("TransferPendingReview")
         return 202, public_view(load_transfer(t["transfer_id"]))
     _transition(t["transfer_id"], "SCREENING", "APPROVED_FOR_POSTING", extra=fraud_fields)
@@ -284,12 +319,18 @@ def create_transfer(req: Request) -> tuple[int, Any]:
         raise RequestInProgressError("A request with this Idempotency-Key is still being processed")
 
     transfer_id = record.resource_id
-    assert transfer_id is not None
+    if transfer_id is None:  # pragma: no cover - begin() always assigns one
+        raise InvalidStateError("Idempotency record has no transfer id")
     try:
         source, dest = _validate_accounts(customer_id, body["source_account_id"], body["destination_account_id"], body["currency"])
     except DependencyUnavailableError:
         # Nothing was created: release the key so the client can retry.
-        aws.table(tables().idempotency).delete_item(Key={"PK": f"CUSTOMER#{customer_id}", "SK": f"REQUEST#{key}"}, ConditionExpression="#s = :p", ExpressionAttributeNames={"#s": "status"}, ExpressionAttributeValues={":p": "IN_PROGRESS"})
+        aws.table(tables().idempotency).delete_item(
+            Key={"PK": f"CUSTOMER#{customer_id}", "SK": f"REQUEST#{key}"},
+            ConditionExpression="#s = :p",
+            ExpressionAttributeNames={"#s": "status"},
+            ExpressionAttributeValues={":p": "IN_PROGRESS"},
+        )
         raise
     except BankingError as err:
         store.complete(customer_id, key, req_hash, {"status": err.status, "body": err.to_body(req.correlation_id)})
@@ -316,10 +357,17 @@ def create_transfer(req: Request) -> tuple[int, Any]:
         "correlation_id": req.correlation_id,
     }
     t["request_fingerprint"] = fingerprint(t)
-    aws.dynamodb_client().transact_write_items(TransactItems=[
-        {"Put": {"TableName": tables().transfers, "Item": t, "ConditionExpression": "attribute_not_exists(PK)"}},
-        {"Put": {"TableName": tables().outbox, "Item": outbox_item(_event("TransferRequested", t, req.correlation_id, status="SCREENING"))}},
-    ])
+    aws.dynamodb_client().transact_write_items(
+        TransactItems=[
+            {"Put": {"TableName": tables().transfers, "Item": t, "ConditionExpression": "attribute_not_exists(PK)"}},
+            {
+                "Put": {
+                    "TableName": tables().outbox,
+                    "Item": outbox_item(_event("TransferRequested", t, req.correlation_id, status="SCREENING")),
+                }
+            },
+        ]
+    )
     metrics.emit("TransferRequested")
     try:
         status, out = _screen_and_post(t, source, dest, req.correlation_id)
@@ -387,10 +435,16 @@ def approve(req: Request) -> tuple[int, Any]:
 
     reviewed = {"reviewed_by": req.principal.subject, "reviewed_at": now_iso(), "review_reason": body.get("reason")}
     _transition(transfer_id, "PENDING_REVIEW", "APPROVED_FOR_POSTING", extra=reviewed)
-    clients.fraud().call("record_review", {
-        "customer_id": t["customer_id"], "decision_sk": t["fraud_decision_sk"], "outcome": "APPROVED",
-        "reviewer": req.principal.subject, "destination_account_id": t["destination_account_id"],
-    })
+    clients.fraud().call(
+        "record_review",
+        {
+            "customer_id": t["customer_id"],
+            "decision_sk": t["fraud_decision_sk"],
+            "outcome": "APPROVED",
+            "reviewer": req.principal.subject,
+            "destination_account_id": t["destination_account_id"],
+        },
+    )
     status, out = _post({**t, "status": "APPROVED_FOR_POSTING"}, req.correlation_id)
     if status == 201:
         out = public_view(load_transfer(transfer_id), reviewer=True)
@@ -409,10 +463,22 @@ def reject(req: Request) -> tuple[int, Any]:
     _reviewer_checks(req.principal, t)
     if t["status"] != "PENDING_REVIEW":
         raise InvalidStateError("Only transfers in PENDING_REVIEW can be rejected")
-    _transition(transfer_id, "PENDING_REVIEW", "REJECTED",
-                extra={"reviewed_by": req.principal.subject, "reviewed_at": now_iso(), "review_reason": body.get("reason"), "reason_code": "REVIEW_REJECTED"},
-                event=_event("TransferRejected", t, req.correlation_id, reason_code="REVIEW_REJECTED", status="REJECTED"))
-    clients.fraud().call("record_review", {"customer_id": t["customer_id"], "decision_sk": t["fraud_decision_sk"], "outcome": "REJECTED", "reviewer": req.principal.subject})
+    _transition(
+        transfer_id,
+        "PENDING_REVIEW",
+        "REJECTED",
+        extra={
+            "reviewed_by": req.principal.subject,
+            "reviewed_at": now_iso(),
+            "review_reason": body.get("reason"),
+            "reason_code": "REVIEW_REJECTED",
+        },
+        event=_event("TransferRejected", t, req.correlation_id, reason_code="REVIEW_REJECTED", status="REJECTED"),
+    )
+    clients.fraud().call(
+        "record_review",
+        {"customer_id": t["customer_id"], "decision_sk": t["fraud_decision_sk"], "outcome": "REJECTED", "reviewer": req.principal.subject},
+    )
     return 200, public_view(load_transfer(transfer_id), reviewer=True)
 
 

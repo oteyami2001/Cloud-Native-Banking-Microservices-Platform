@@ -102,7 +102,9 @@ def test_transaction_history_pagination(bank):
         assert bank.transfer(c, src, dst, 1_000)[0] == 201
     status, page1 = bank.call("GET /v1/accounts/{id}/transactions", c["claims"], path={"id": src}, query={"limit": "2"})
     assert status == 200 and len(page1["items"]) == 2 and page1["next_cursor"]
-    status, page2 = bank.call("GET /v1/accounts/{id}/transactions", c["claims"], path={"id": src}, query={"limit": "2", "cursor": page1["next_cursor"]})
+    status, page2 = bank.call(
+        "GET /v1/accounts/{id}/transactions", c["claims"], path={"id": src}, query={"limit": "2", "cursor": page1["next_cursor"]}
+    )
     assert status == 200 and len(page2["items"]) == 2
     ids = {e["entry_id"] for e in page1["items"]} | {e["entry_id"] for e in page2["items"]}
     assert len(ids) == 4

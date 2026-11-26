@@ -45,9 +45,7 @@ def get_correlation_id() -> str | None:
 
 def redact(value: Any) -> Any:
     if isinstance(value, dict):
-        return {
-            k: (REDACTED if str(k).lower() in SENSITIVE_KEYS else redact(v)) for k, v in value.items()
-        }
+        return {k: (REDACTED if str(k).lower() in SENSITIVE_KEYS else redact(v)) for k, v in value.items()}
     if isinstance(value, list | tuple):
         return [redact(v) for v in value]
     return value
@@ -56,8 +54,7 @@ def redact(value: Any) -> Any:
 class JsonFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         doc: dict[str, Any] = {
-            "ts": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(record.created))
-            + f".{int(record.msecs):03d}Z",
+            "ts": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime(record.created)) + f".{int(record.msecs):03d}Z",
             "level": record.levelname,
             "service": os.environ.get("SERVICE_NAME", "novabank"),
             "message": record.getMessage(),

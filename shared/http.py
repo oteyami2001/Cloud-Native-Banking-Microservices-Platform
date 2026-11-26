@@ -91,11 +91,7 @@ class Router:
     def __call__(self, event: dict[str, Any], _context: Any = None) -> dict[str, Any]:
         headers = {str(k).lower(): str(v) for k, v in (event.get("headers") or {}).items()}
         supplied = headers.get("x-correlation-id", "")
-        correlation_id = (
-            supplied
-            if _CORRELATION_RE.match(supplied)
-            else event.get("requestContext", {}).get("requestId", "local-request")
-        )
+        correlation_id = supplied if _CORRELATION_RE.match(supplied) else event.get("requestContext", {}).get("requestId", "local-request")
         set_correlation_id(correlation_id)
         route_key = event.get("routeKey", "")
         try:
@@ -120,7 +116,7 @@ class Router:
         except BankingError as err:
             log(self.logger, logging.WARNING, "request.rejected", route=route_key, status=err.status, code=err.code)
             return response(err.status, err.to_body(correlation_id), correlation_id)
-        except Exception:  # noqa: BLE001 - convert unexpected failures into a safe 500
+        except Exception:
             self.logger.exception("request.failed", extra={"fields": {"route": route_key}})
             body = {"error": {"code": "INTERNAL_ERROR", "message": "Internal error", "correlation_id": correlation_id}}
             return response(500, body, correlation_id)

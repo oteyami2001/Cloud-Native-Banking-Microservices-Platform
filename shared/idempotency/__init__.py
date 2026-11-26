@@ -76,18 +76,12 @@ class IdempotencyStore:
         except ClientError as exc:
             if exc.response["Error"]["Code"] != "ConditionalCheckFailedException":
                 raise
-        existing = aws.to_native(
-            self._table.get_item(Key=self._key(customer_id, key), ConsistentRead=True).get("Item")
-        )
+        existing = aws.to_native(self._table.get_item(Key=self._key(customer_id, key), ConsistentRead=True).get("Item"))
         if existing is None:  # pragma: no cover - would require a concurrent delete
             raise IdempotencyKeyReusedError("Idempotency record could not be resolved")
         if existing["request_hash"] != req_hash:
-            raise IdempotencyKeyReusedError(
-                "Idempotency-Key was already used with a different request payload"
-            )
-        return IdempotencyRecord(
-            False, existing["status"], existing.get("resource_id"), existing.get("response")
-        )
+            raise IdempotencyKeyReusedError("Idempotency-Key was already used with a different request payload")
+        return IdempotencyRecord(False, existing["status"], existing.get("resource_id"), existing.get("response"))
 
     def complete(self, customer_id: str, key: str, req_hash: str, response: dict[str, Any]) -> None:
         self._table.update_item(

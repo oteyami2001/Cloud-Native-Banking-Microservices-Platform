@@ -38,9 +38,7 @@ def validate_object(
     return out
 
 
-def string(
-    *, min_len: int = 1, max_len: int = 128, pattern: str | None = None, choices: set[str] | None = None
-) -> Validator:
+def string(*, min_len: int = 1, max_len: int = 128, pattern: str | None = None, choices: set[str] | None = None) -> Validator:
     compiled = re.compile(pattern) if pattern else None
 
     def check(name: str, value: Any) -> str:

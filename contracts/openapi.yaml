@@ -1,0 +1,485 @@
+openapi: 3.1.0
+info:
+  title: NovaBank Digital Banking API
+  version: 1.0.0
+  summary: Synthetic demonstration banking API — no real money, no real customer data.
+  description: |
+    Versioned REST API for the NovaBank Digital sandbox, served by an Amazon API Gateway HTTP API with a
+    Cognito JWT authorizer. All amounts are **integer minor units** (cents for USD); floating-point
+    numbers are rejected. Identity is always derived from the verified access token, never from the
+    request. Objects owned by other customers return `404` to prevent identifier enumeration.
+  license:
+    name: MIT
+servers:
+  - url: https://{apiId}.execute-api.{region}.amazonaws.com
+    variables:
+      apiId: { default: example }
+      region: { default: us-east-2 }
+security:
+  - cognito: [novabank/read]
+tags:
+  - name: Customers
+  - name: Accounts
+  - name: Transfers
+  - name: Notifications
+  - name: Administration
+paths:
+  /v1/customers:
+    post:
+      tags: [Customers]
+      operationId: createCustomer
+      summary: Create the caller's customer profile (one per identity)
+      security: [{ cognito: [novabank/write] }]
+      parameters: [{ $ref: '#/components/parameters/CorrelationId' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateCustomerRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Customer' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /v1/customers/me:
+    get:
+      tags: [Customers]
+      operationId: getMyProfile
+      summary: Retrieve the authenticated customer's profile
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Customer' } } } }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    patch:
+      tags: [Customers]
+      operationId: updateMyProfile
+      summary: Update display name or notification preferences
+      security: [{ cognito: [novabank/write] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateCustomerRequest' }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Customer' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+  /v1/accounts:
+    post:
+      tags: [Accounts]
+      operationId: createAccount
+      summary: Open a synthetic checking or savings account
+      security: [{ cognito: [novabank/write] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAccountRequest' }
+      responses:
+        '201': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Account' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    get:
+      tags: [Accounts]
+      operationId: listAccounts
+      summary: List the caller's accounts
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AccountPage' } } } }
+  /v1/accounts/{id}:
+    get:
+      tags: [Accounts]
+      operationId: getAccount
+      parameters: [{ $ref: '#/components/parameters/AccountId' }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Account' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/accounts/{id}/balance:
+    get:
+      tags: [Accounts]
+      operationId: getBalance
+      summary: Authoritative balance from the ledger (strongly consistent read)
+      parameters: [{ $ref: '#/components/parameters/AccountId' }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Balance' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/accounts/{id}/transactions:
+    get:
+      tags: [Accounts]
+      operationId: listTransactions
+      summary: Ledger entries for the account, newest first
+      parameters:
+        - $ref: '#/components/parameters/AccountId'
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/EntryPage' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/transfers:
+    post:
+      tags: [Transfers]
+      operationId: createTransfer
+      summary: Request an internal transfer
+      description: |
+        Requires an `Idempotency-Key`. Replaying the same key with the same payload returns the original
+        outcome; reusing it with a different payload returns `422 IDEMPOTENCY_KEY_REUSED`.
+        High-risk transfers are held (`202`, `PENDING_REVIEW`) and nothing is posted until an authorised
+        reviewer approves them.
+      security: [{ cognito: [novabank/write] }]
+      parameters:
+        - $ref: '#/components/parameters/IdempotencyKey'
+        - $ref: '#/components/parameters/CorrelationId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateTransferRequest' }
+            example: { source_account_id: ACC-01HXAMPLE000000000001, destination_account_id: ACC-01HXAMPLE000000000002, amount_minor: 25000, currency: USD }
+      responses:
+        '201': { description: Posted, content: { application/json: { schema: { $ref: '#/components/schemas/Transfer' } } } }
+        '202': { description: Held for review, content: { application/json: { schema: { $ref: '#/components/schemas/Transfer' } } } }
+        '400': { $ref: '#/components/responses/ValidationError' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/BusinessRejection' }
+        '503': { $ref: '#/components/responses/DependencyUnavailable' }
+  /v1/transfers/{id}:
+    get:
+      tags: [Transfers]
+      operationId: getTransfer
+      parameters: [{ $ref: '#/components/parameters/TransferId' }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/Transfer' } } } }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /v1/notifications:
+    get:
+      tags: [Notifications]
+      operationId: listNotifications
+      summary: Synthetic in-app notifications for the caller
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/NotificationPage' } } } }
+  /v1/admin/fraud-alerts:
+    get:
+      tags: [Administration]
+      operationId: listFraudAlerts
+      summary: Open fraud alerts (group fraud-reviewers)
+      security: [{ cognito: [novabank/admin] }]
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Cursor'
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/FraudAlertPage' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /v1/admin/transfers/{id}/approve:
+    post:
+      tags: [Administration]
+      operationId: approveTransfer
+      summary: Approve a held transfer (revalidated before posting; no self-approval)
+      security: [{ cognito: [novabank/admin] }]
+      parameters: [{ $ref: '#/components/parameters/TransferId' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewRequest' }
+      responses:
+        '200': { description: Approved and posted, content: { application/json: { schema: { $ref: '#/components/schemas/Transfer' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/BusinessRejection' }
+  /v1/admin/transfers/{id}/reject:
+    post:
+      tags: [Administration]
+      operationId: rejectTransfer
+      security: [{ cognito: [novabank/admin] }]
+      parameters: [{ $ref: '#/components/parameters/TransferId' }]
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReviewRequest' }
+      responses:
+        '200': { description: Rejected, content: { application/json: { schema: { $ref: '#/components/schemas/Transfer' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /v1/admin/reconciliation:
+    get:
+      tags: [Administration]
+      operationId: listReconciliationReports
+      summary: Latest ledger reconciliation reports (auditors or fraud-reviewers)
+      security: [{ cognito: [novabank/admin] }]
+      parameters: [{ $ref: '#/components/parameters/Limit' }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ReconciliationPage' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /v1/admin/audit/transfers/{id}:
+    get:
+      tags: [Administration]
+      operationId: getTransferAuditTrail
+      summary: Evidence trail (S3 key + SHA-256) for a transfer
+      security: [{ cognito: [novabank/admin] }]
+      parameters: [{ $ref: '#/components/parameters/TransferId' }]
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/AuditTrail' } } } }
+        '403': { $ref: '#/components/responses/Forbidden' }
+components:
+  securitySchemes:
+    cognito:
+      type: oauth2
+      description: Amazon Cognito authorization-code flow with PKCE. Access tokens only.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.auth.us-east-2.amazoncognito.com/oauth2/authorize
+          tokenUrl: https://example.auth.us-east-2.amazoncognito.com/oauth2/token
+          scopes:
+            novabank/read: Read own customer, account and transfer data
+            novabank/write: Create customers, accounts and transfers
+            novabank/admin: Administrative operations (also requires a Cognito group)
+  parameters:
+    AccountId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, pattern: '^ACC-[0-9A-Z]{20}$' }
+    TransferId:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, pattern: '^TRF-[0-9A-Z]{20}$' }
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 100, default: 25 }
+    Cursor:
+      name: cursor
+      in: query
+      description: Opaque cursor; validated server-side to stay within the caller's partition.
+      schema: { type: string, maxLength: 2048 }
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema: { type: string, pattern: '^[A-Za-z0-9_\-]{16,128}$' }
+    CorrelationId:
+      name: X-Correlation-Id
+      in: header
+      required: false
+      schema: { type: string, pattern: '^[A-Za-z0-9\-_.]{8,128}$' }
+  responses:
+    ValidationError: { description: Invalid request, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Unauthenticated: { description: 'Missing, invalid or expired token', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Forbidden: { description: 'Missing scope, group or separation-of-duties violation', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    NotFound: { description: Not found or not owned by the caller, content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    Conflict: { description: 'State conflict, request in progress or concurrent update', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+    BusinessRejection:
+      description: Insufficient funds, inactive account, currency mismatch, fraud decline or idempotency key reuse
+      content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } }
+    DependencyUnavailable: { description: 'A required dependency failed; nothing was posted (fail closed)', content: { application/json: { schema: { $ref: '#/components/schemas/Error' } } } }
+  schemas:
+    MinorUnits:
+      type: integer
+      minimum: 1
+      maximum: 100000000
+      description: Integer minor units (cents). Floats are rejected.
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: { type: string, examples: [INSUFFICIENT_FUNDS] }
+            message: { type: string }
+            correlation_id: { type: string }
+            details: { type: object }
+        transfer: { $ref: '#/components/schemas/Transfer' }
+    CreateCustomerRequest:
+      type: object
+      additionalProperties: false
+      required: [display_name]
+      properties:
+        display_name: { type: string, minLength: 1, maxLength: 80 }
+        notify_in_app: { type: boolean }
+        notify_security_alerts: { type: boolean }
+    UpdateCustomerRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        display_name: { type: string, minLength: 1, maxLength: 80 }
+        notify_in_app: { type: boolean }
+        notify_security_alerts: { type: boolean }
+    Customer:
+      type: object
+      required: [customer_id, display_name, status, synthetic]
+      properties:
+        customer_id: { type: string, pattern: '^CUS-[0-9A-Z]{20}$' }
+        display_name: { type: string }
+        status: { type: string, enum: [ACTIVE, SUSPENDED] }
+        preferences: { type: object }
+        created_at: { type: string, format: date-time }
+        synthetic: { const: true }
+    CreateAccountRequest:
+      type: object
+      additionalProperties: false
+      required: [account_type]
+      properties:
+        account_type: { type: string, enum: [CHECKING, SAVINGS] }
+        currency: { type: string, enum: [USD], default: USD }
+        nickname: { type: string, maxLength: 40 }
+        sandbox_opening_balance_minor:
+          type: integer
+          minimum: 1
+          maximum: 2500000
+          description: Synthetic opening deposit, posted as a balanced journal (Dr GL-1000 / Cr deposit). Sandbox only.
+    Account:
+      type: object
+      required: [account_id, account_type, currency, status, synthetic]
+      properties:
+        account_id: { type: string, pattern: '^ACC-[0-9A-Z]{20}$' }
+        account_type: { type: string, enum: [CHECKING, SAVINGS] }
+        nickname: { type: [string, 'null'] }
+        currency: { type: string, enum: [USD] }
+        status: { type: string, enum: [ACTIVE, FROZEN, CLOSED] }
+        masked_number: { type: string }
+        created_at: { type: string, format: date-time }
+        synthetic: { const: true }
+    AccountPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Account' } }
+        next_cursor: { type: [string, 'null'] }
+    Balance:
+      type: object
+      required: [account_id, currency, available_balance_minor, status]
+      properties:
+        account_id: { type: string }
+        currency: { type: string }
+        available_balance_minor: { type: integer, minimum: 0 }
+        status: { type: string }
+        version: { type: integer }
+        as_of: { type: string, format: date-time }
+        synthetic: { const: true }
+    Entry:
+      type: object
+      properties:
+        entry_id: { type: string }
+        journal_id: { type: string }
+        journal_type: { type: string, enum: [OPENING_BALANCE, TRANSFER, REVERSAL] }
+        transfer_id: { type: [string, 'null'] }
+        direction: { type: string, enum: [DEBIT, CREDIT] }
+        amount_minor: { type: integer }
+        signed_amount_minor: { type: integer }
+        currency: { type: string }
+        counterparty_account_id: { type: [string, 'null'] }
+        description: { type: string }
+        posted_at: { type: string, format: date-time }
+    EntryPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Entry' } }
+        next_cursor: { type: [string, 'null'] }
+    CreateTransferRequest:
+      type: object
+      additionalProperties: false
+      required: [source_account_id, destination_account_id, amount_minor, currency]
+      properties:
+        source_account_id: { type: string, pattern: '^ACC-[0-9A-Z]{20}$' }
+        destination_account_id: { type: string, pattern: '^ACC-[0-9A-Z]{20}$' }
+        amount_minor: { $ref: '#/components/schemas/MinorUnits' }
+        currency: { type: string, enum: [USD] }
+        memo: { type: string, maxLength: 80 }
+    Transfer:
+      type: object
+      required: [transfer_id, status, amount_minor, currency]
+      properties:
+        transfer_id: { type: string, pattern: '^TRF-[0-9A-Z]{20}$' }
+        status: { type: string, enum: [SCREENING, PENDING_REVIEW, APPROVED_FOR_POSTING, COMPLETED, REJECTED, FAILED] }
+        source_account_id: { type: string }
+        destination_account_id: { type: string }
+        amount_minor: { type: integer }
+        currency: { type: string }
+        memo: { type: [string, 'null'] }
+        reason_code: { type: [string, 'null'] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: [string, 'null'] }
+        posted_at: { type: [string, 'null'] }
+        synthetic: { const: true }
+        fraud: { type: object, description: Present for reviewers only }
+        reviewed_by: { type: [string, 'null'] }
+    ReviewRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        reason: { type: string, maxLength: 200 }
+    Notification:
+      type: object
+      properties:
+        event_type: { type: string }
+        title: { type: string }
+        message: { type: string }
+        status: { type: string }
+        entity_id: { type: string }
+        created_at: { type: string, format: date-time }
+    NotificationPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/Notification' } }
+        next_cursor: { type: [string, 'null'] }
+    FraudAlert:
+      type: object
+      properties:
+        decision_id: { type: string }
+        transfer_id: { type: string }
+        risk_score: { type: integer, minimum: 0, maximum: 100 }
+        decision: { type: string, enum: [PENDING_REVIEW, REJECTED] }
+        triggered_rules: { type: array, items: { type: string } }
+        policy_version: { type: string }
+        decided_at: { type: string }
+        review_expires_at: { type: string }
+        amount_minor: { type: integer }
+        currency: { type: string }
+    FraudAlertPage:
+      type: object
+      properties:
+        items: { type: array, items: { $ref: '#/components/schemas/FraudAlert' } }
+        next_cursor: { type: [string, 'null'] }
+    ReconciliationPage:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              run_id: { type: string }
+              status: { type: string, enum: [BALANCED, DISCREPANCIES_FOUND] }
+              discrepancy_count: { type: integer }
+              accounts_checked: { type: integer }
+              journals_checked: { type: integer }
+              total_assets_minor: { type: integer }
+              total_liabilities_minor: { type: integer }
+              generated_at: { type: string }
+              s3_key: { type: string }
+              sha256: { type: string }
+    AuditTrail:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              event_id: { type: string }
+              event_type: { type: string }
+              correlation_id: { type: string }
+              s3_key: { type: string }
+              sha256: { type: string, pattern: '^[0-9a-f]{64}$' }
+              recorded_at: { type: string }

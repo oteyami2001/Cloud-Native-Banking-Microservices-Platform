@@ -27,9 +27,7 @@ _DECIMAL_RE = re.compile(r"^(0|[1-9]\d{0,11})(\.\d{1,2})?$")
 
 def validate_currency(currency: object) -> str:
     if not isinstance(currency, str) or currency not in SUPPORTED_CURRENCIES:
-        raise ValidationError(
-            "Unsupported currency", details={"supported": sorted(SUPPORTED_CURRENCIES)}
-        )
+        raise ValidationError("Unsupported currency", details={"supported": sorted(SUPPORTED_CURRENCIES)})
     return currency
 
 

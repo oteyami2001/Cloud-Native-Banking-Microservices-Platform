@@ -61,9 +61,7 @@ def _split_claim(value: Any) -> frozenset[str]:
 
 
 def principal_from_event(event: dict[str, Any]) -> Principal:
-    claims = (
-        event.get("requestContext", {}).get("authorizer", {}).get("jwt", {}).get("claims")
-    )
+    claims = event.get("requestContext", {}).get("authorizer", {}).get("jwt", {}).get("claims")
     if not isinstance(claims, dict) or not claims.get("sub"):
         raise AuthenticationError("Missing or invalid access token")
 
