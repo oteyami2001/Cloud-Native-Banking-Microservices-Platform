@@ -30,5 +30,11 @@ Redact account IDs and other identifiers before publishing.
 | Bootstrap state | Backed up to `s3://novabank-tfstate-…/novabank/bootstrap/terraform.tfstate` (SSE-KMS) |
 | Workload resources | None yet (Phase 8 pending) |
 
-Not yet available: GitHub Actions run IDs, live AWS results, measured latency,
+## 2026-11-26 — First GitHub Actions runs (`main` @ e038c6e)
+| Workflow | Run | Result |
+|---|---|---|
+| ci — Python (ruff, 170 tests, coverage ≥85%), Terraform (fmt, 4 roots validate, 10 test suites), Frontend (tsc, vitest, build) | [45889062755](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45889062755) | 3/3 jobs success |
+| security-scan — Checkov + insecure-fixture negative test + TFLint, Bandit + pip-audit, gitleaks, zizmor, CodeQL (Python, JS/TS) | [45889062736](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45889062736) | 6/6 jobs success (dependency review skipped: push event) |
+
+Not yet available: deployment run IDs, live AWS results, measured latency,
 measured RTO/RPO, actual costs.
