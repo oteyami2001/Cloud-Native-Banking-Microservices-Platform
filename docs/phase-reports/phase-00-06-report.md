@@ -25,6 +25,7 @@ change. Nothing was deployed; no AWS resources were created or modified.
 * Previous projects used account `666102401492` / `us-east-2`; this is **not
   assumed** — `expected_account_id` has no default and must be confirmed.
 * Safe read-only discovery: `scripts/discover_aws.sh` (CloudShell-ready).
+* **2026-11-26 update:** the owner confirmed the target from CloudShell: the same account as Projects 1–3 (ID ending `…1492`), region `us-east-2`, accessed through an assumed role (`AccountFullAccessRole`). The full read-only discovery (`scripts/discover_aws.sh`) is still pending.
 
 ## 3. Delivered (by phase)
 | Phase | Delivered |
@@ -66,7 +67,7 @@ T27–T30 need AWS. 170 tests pass, 91% coverage. Details:
 `docs/validation-scenarios.md`.
 
 ## 9. Remaining blockers (need the owner)
-1. Confirm target AWS account and region; run `scripts/discover_aws.sh` in CloudShell and share the (redacted) output.
+1. ~~Confirm target AWS account and region~~ (done: …1492 / us-east-2). Run `scripts/discover_aws.sh` in CloudShell and share the (redacted) output.
 2. Approve Phase 7 bootstrap (`terraform/bootstrap`) — creates 2 S3 buckets and 4 IAM roles (+ OIDC provider if none exists).
 3. Create GitHub environments `plan`, `dev`, `cleanup` with reviewers; set `AWS_ACCOUNT_ID`/`AWS_REGION` variables.
 4. Re-verify AWS prices with the Pricing Calculator.
