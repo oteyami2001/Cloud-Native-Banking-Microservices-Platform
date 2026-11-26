@@ -79,9 +79,11 @@ def main() -> int:
         return 0
     except Exception as exc:  # noqa: BLE001 - any failure triggers rollback
         print(f"\n**Deployment failed:** {exc}\n\nRolling back:")
+        print(f"::error::Deployment failed, rolling back: {exc}", file=sys.stderr)
         for fn, previous, new in reversed(moved):
             lam.update_alias(FunctionName=fn, Name="live", FunctionVersion=previous)
             print(f"- {fn}: live {new} -> {previous}")
+            print(f"rolled back {fn}: live {new} -> {previous}", file=sys.stderr)
         return 1
 
 
