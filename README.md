@@ -16,13 +16,18 @@ Platform, and Security & Compliance projects).
 ## Current status
 | Area | Status |
 |---|---|
-| Phases 0–6 (design, local foundation, ledger, APIs, fraud/events, frontend) | ✅ complete offline |
-| Terraform, CI/CD workflows, observability (Phases 7/9/10 code) | ✅ written and tested offline — **not applied** |
-| Phase 7 bootstrap (state + artifact buckets, GitHub OIDC roles) | ✅ applied 2026-11-26, verified 12/12 |
-| AWS workload deployment (Phase 8+) | ⏸ awaiting GitHub environment setup and approval |
+| Design, services, ledger, fraud, events, frontend | ✅ complete; 177 Python + 31 frontend tests pass in CI |
+| Bootstrap (state, artifacts, GitHub OIDC roles) | ✅ applied 2026-11-26 |
+| Dev environment (182 resources via Terraform + GitHub Actions) | ✅ deployed 2026-11-26 |
+| Live validation | ✅ 13 of 30 scenarios proven on the running system; all 30 covered in CI or offline |
+| Teardown (T30) | ⏳ after the demo period |
 
-See the [Phase 0–6 report](docs/phase-reports/phase-00-06-report.md) and the
-[validation register](docs/validation-scenarios.md) (23/30 scenarios verified offline).
+**Case study:** [`docs/case-study.html`](docs/case-study.html) (architecture, live evidence, screenshots).
+Evidence: [validation register](docs/validation-scenarios.md) · [portfolio evidence log](docs/portfolio-evidence.md).
+
+| Fraud review queue | Balances after approval |
+|---|---|
+| ![Fraud review queue](docs/screenshots/review-queue.webp) | ![Balances after approval](docs/screenshots/balances-after-approval.webp) |
 
 ## Architecture
 ```mermaid
