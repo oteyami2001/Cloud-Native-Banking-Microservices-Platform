@@ -22,6 +22,13 @@ explicit owner approval for each apply (done for dev on 2026-11-26).
 8. **Verify**: dashboard, `reconciliation` workflow = BALANCED, record results
    in `docs/validation-scenarios.md` with run IDs.
 
+## One-command rebuild from AWS CloudShell
+`scripts/rebuild_from_cloudshell.sh` runs the same steps without GitHub Actions:
+bootstrap, dev apply (plan shown first), GL-1000 seed, Lambda build and deploy with
+rollback, frontend build and upload, optional Cognito users, and a smoke test. Every
+step that changes AWS asks you to type `yes`. It is safe to re-run. Use the GitHub
+pipelines for normal changes; this script is for a full rebuild, for example after T30.
+
 ## Rollback
 * Application: re-run `deploy-services` with an earlier build, or
   `aws lambda update-alias --function-name novabank-dev-<svc> --name live --function-version <n>`.
