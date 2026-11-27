@@ -24,7 +24,7 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T15 | Ledger reconciles | `test_reconciliation_balances_after_activity`, property tests, tampering detection | ✅ | ✅ 45889062755 | ☐ |
 | T16 | High-risk transaction held/rejected | `test_high_risk_transfer_is_held_without_posting`, `…rejected` | ✅ | ✅ 45889062755 | ✅ 2026-11-27 (TRF-01M8D6CKRY7D1MSZ22WN $6,000 held PENDING_REVIEW; source balance unchanged at $20,000) |
 | T17 | Unauthorized fraud approval rejected | `test_customer_cannot_approve_held_transfer_or_supply_fraud_approval` | ✅ | ✅ 45889062755 | ☐ |
-| T18 | Authorized approval revalidated | `test_authorised_approval_is_revalidated_before_posting` + balance/tamper/frozen tests | ✅ | ✅ 45889062755 | ☐ |
+| T18 | Authorized approval revalidated | `test_authorised_approval_is_revalidated_before_posting` + balance/tamper/frozen tests | ✅ | ✅ 45889062755 | ✅ 2026-11-27 (reviewer approved TRF-01M8D6CKRY7D1MSZ22WN → COMPLETED; ****1TXA $20,000→$14,000, ****HZBQ $500→$6,500, combined $25,350 unchanged) |
 | T19 | Fraud failure prevents posting | `test_fraud_service_failure_prevents_posting` | ✅ | ✅ 45889062755 | ☐ |
 | T20 | Outbox publication failure recoverable | `test_partial_publication_failure_is_reported_and_recoverable` | ✅ | ✅ 45889062755 | ☐ |
 | T21 | Duplicate event delivery safe | `test_duplicate_event_delivery_is_handled_safely` | ✅ | ✅ 45889062755 | ☐ |
@@ -39,4 +39,4 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T30 | Project resources cleaned up | `cleanup.yml` + `scripts/verify_cleanup.sh`; needs live | ☐ | ☐ | ☐ |
 
 **Offline status: 23 verified, 2 partially (static), 1 verified with a local tool, 4 require AWS.**
-**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T16 and T27 verified (2026-11-26); remaining live scenarios pending.
+**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T16, T18 and T27 verified (2026-11-26/27); remaining live scenarios pending.

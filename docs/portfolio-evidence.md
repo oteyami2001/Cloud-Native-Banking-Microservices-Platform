@@ -57,6 +57,8 @@ Redact account IDs and other identifiers before publishing.
 
 | First live banking session (owner, browser) | 2026-11-26 | Cognito sign-in → profile → checking ($4,850 opening journal) + 2 savings → $250 transfer `TRF-01M8D5AANPKV181M1HFC` COMPLETED; checking $4,600 / savings $500; history shows matching −/+ entries; combined $5,350 = sum of opening deposits |
 
+| Fraud hold → reviewer approval (owner, browser) | 2026-11-27 | $6,000 transfer `TRF-01M8D6CKRY7D1MSZ22WN` held PENDING_REVIEW (score 60, FR-001 + FR-007, policy 2026.11.1) with no posting (T16). Reviewer account (`fraud-reviewers`) approved it from the queue → `COMPLETED`; ****1TXA $20,000 → $14,000, ****HZBQ $500 → $6,500, combined $25,350 unchanged (T18). Reconciliation page lists hourly reports, all BALANCED, each with a SHA-256 evidence hash |
+
 Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 
 Not yet available: service deployment run IDs, live AWS results, measured latency,
