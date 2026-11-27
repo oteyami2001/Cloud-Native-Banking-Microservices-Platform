@@ -1,5 +1,5 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { PERSONAS, useAuth } from "../lib/auth";
+import { homeFor, PERSONAS, useAuth } from "../lib/auth";
 import { config } from "../lib/config";
 
 export function Login() {
@@ -29,7 +29,7 @@ export function Login() {
               className="persona"
               onClick={() => {
                 loginLocal(p);
-                navigate(p.groups.includes("customers") ? "/dashboard" : p.groups.includes("fraud-reviewers") ? "/admin/fraud" : "/admin/reconciliation");
+                navigate(homeFor(p.groups));
               }}
             >
               <strong>{p.name}</strong>

@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { App } from "../src/App";
-import { AuthProvider } from "../src/lib/auth";
+import { AuthProvider, homeFor } from "../src/lib/auth";
 import { validateTransfer } from "../src/pages/Transfer";
 
 const A = "ACC-0000000000000000000A";
@@ -35,5 +35,14 @@ describe("App", () => {
     // Unauthenticated users are sent to the login page; its wording depends on
     // the build's auth mode (offline personas locally, Cognito when deployed).
     expect(screen.getByRole("heading", { name: /Choose a sandbox persona|^Sign in$/ })).toBeInTheDocument();
+  });
+});
+
+describe("homeFor", () => {
+  it("sends each role to its own landing page", () => {
+    expect(homeFor(["customers"])).toBe("/dashboard");
+    expect(homeFor(["fraud-reviewers"])).toBe("/admin/fraud");
+    expect(homeFor(["auditors"])).toBe("/admin/reconciliation");
+    expect(homeFor([])).toBe("/");
   });
 });

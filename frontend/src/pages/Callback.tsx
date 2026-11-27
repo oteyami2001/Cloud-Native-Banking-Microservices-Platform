@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../lib/auth";
+import { homeFor, useAuth } from "../lib/auth";
 import { ErrorNote } from "../components/Layout";
 
 export function Callback() {
@@ -19,7 +19,7 @@ export function Callback() {
       setError(new Error("Missing authorization code"));
       return;
     }
-    completeCognito(code, state).then(() => navigate("/dashboard"), setError);
+    completeCognito(code, state).then((s) => navigate(homeFor(s.groups), { replace: true }), setError);
   }, [completeCognito, navigate]);
   return <section className="card narrow">{error ? <ErrorNote error={error} /> : <p>Completing sign-in…</p>}</section>;
 }

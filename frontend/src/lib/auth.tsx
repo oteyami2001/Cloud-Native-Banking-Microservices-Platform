@@ -25,7 +25,7 @@ interface AuthContextValue {
   expireSession: () => void;
   loginLocal: (persona: Persona) => void;
   loginCognito: () => Promise<void>;
-  completeCognito: (code: string, state: string) => Promise<void>;
+  completeCognito: (code: string, state: string) => Promise<Session>;
   logout: () => void;
 }
 
@@ -132,13 +132,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }).catch(() => {
       throw new Error("Token exchange failed");
     });
-    setSession({
+    const session: Session = {
       token: tokens.access_token,
       refreshToken: tokens.refresh_token,
       expiresAt: Date.now() + tokens.expires_in * 1000,
       name: "Signed in",
       groups: decodeGroups(tokens.access_token),
-    });
+    };
+    setSession(session);
+    return session;
   }, [setSession]);
 
   const logout = useCallback(() => {
@@ -154,6 +156,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     [session, getAccessToken, expireSession, loginLocal, loginCognito, completeCognito, logout],
   );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
+
+/** Landing page for a role: customers see accounts, staff see their queue. */
+export function homeFor(groups: string[]): string {
+  if (groups.includes("customers")) return "/dashboard";
+  if (groups.includes("fraud-reviewers")) return "/admin/fraud";
+  if (groups.includes("auditors")) return "/admin/reconciliation";
+  return "/";
 }
 
 export function useAuth(): AuthContextValue {
