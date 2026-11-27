@@ -35,8 +35,8 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T26 | Unapproved deployment prevented | Workflow structure tests; requires GitHub environment protection rules | ◐ static | ☐ | ☐ |
 | T27 | Failed release rolled back | `scripts/deploy_lambda.py` rollback path + `tests/unit/test_deploy_script.py` | ✅ | ✅ | ✅ deploy-services 45904772462: release judged unhealthy → all 10 aliases rolled back automatically (trigger was a false positive, since fixed) |
 | T28 | Drift detected | `drift-detection.yml`; needs live state | ☐ | ☐ | ◐ baseline only: drift-detection runs 45947157411 / 45947178232 reported no drift (plan exit 0). Detecting an injected change not yet exercised |
-| T29 | Restore + reconciliation tested | `runbooks/database-recovery.md`; needs live PITR | ☐ | ☐ | ☐ |
+| T29 | Restore + reconciliation tested | `runbooks/database-recovery.md`, `scripts/verify_restore.py` + `tests/unit/test_verify_restore.py` | ✅ | ✅ | ✅ 2026-11-27 PITR of ledger + transfers to 05:10:00Z → copies ACTIVE in 2 min 20 s; read-only verifier BALANCED (5 accounts, 6 journals, assets = liabilities = $25,350); balances match the pre-$10-transfer state (****EJKY $4,600, ****HZBQ $6,500); temporary tables deleted. Service switch-over not exercised |
 | T30 | Project resources cleaned up | `cleanup.yml` + `scripts/verify_cleanup.sh`; needs live | ☐ | ☐ | ☐ |
 
 **Offline status: 23 verified, 2 partially (static), 1 verified with a local tool, 4 require AWS.**
-**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T08, T11 (UI), T15, T16, T18 and T27 verified; T28 clean baseline (2026-11-26/27); remaining live scenarios pending.
+**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T08, T11 (UI), T15, T16, T18, T27 and T29 verified; T28 clean baseline (2026-11-26/27); remaining live scenarios pending.

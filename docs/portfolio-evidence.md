@@ -64,8 +64,8 @@ Redact account IDs and other identifiers before publishing.
 | Fraud hold → reviewer rejection (owner, browser) | 2026-11-27 | $5,500 from ****1TXA → `TRF-01M8DQDNF21D3C5S2QAH` PENDING_REVIEW (score 60, FR-001 + FR-007); reviewer rejected → `REJECTED`, queue empty; ****1TXA $14,000 / ****HZBQ $6,510 unchanged, no history entry, combined $25,350 |
 | reconciliation (on demand) | [45947086172](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45947086172) | **Success**: ledger reconciliation `:live` returned BALANCED. Earlier scheduled run [45901508082](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45901508082) failed with `Function not found …:live` because it fired before the first service deployment created the alias |
 | drift-detection ×2 | [45947157411](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45947157411), [45947178232](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45947178232) | **No drift detected**: `terraform plan -detailed-exitcode` returned 0 against live dev (182 resources) |
+| Point-in-time restore drill (owner, CloudShell) | 2026-11-27 | Drill 1: `novabank-dev-{ledger,transfers}` restored to 05:10:00Z in **4 min 9 s**, but the verifier could not run (Python 3.11 in CloudShell lacked pip) and the copies were deleted unchecked. Drill 2: restored in **2 min 20 s**; `scripts/verify_restore.py` (read-only) → **BALANCED**, 5 accounts / 6 journals / 2 transfers, assets = liabilities = $25,350.00; ****EJKY $4,600 and ****HZBQ $6,500 (state before the 05:11:10Z $10 transfer, proving the point in time). Temporary tables deleted. Live tables untouched |
 
 Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 
-Not yet available: service deployment run IDs, live AWS results, measured latency,
-measured RTO/RPO, actual costs.
+Not yet available: measured latency, a full restore switch-over, actual costs.

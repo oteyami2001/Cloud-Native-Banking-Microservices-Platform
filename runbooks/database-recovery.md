@@ -27,6 +27,9 @@ Record start/finish times for the RTO measurement.
 Run the **read-only** verifier against the restored tables. Do not point the
 scheduled reconciliation job at them: it writes evidence, an audit row and an
 outbox event, which would publish into the live platform.
+In AWS CloudShell first install Python 3.11 with pip and boto3 (the default Python is too old):
+`sudo dnf install -y python3.11 python3.11-pip && python3.11 -m pip install --target /tmp/pydeps boto3`,
+then prefix the command with `PYTHONPATH=/tmp/pydeps`. Do not delete the restored tables until the verifier has passed.
 ```bash
 python3.11 scripts/verify_restore.py --ledger-table novabank-dev-ledger-restored \
   --transfers-table novabank-dev-transfers-restored --as-of "$T"

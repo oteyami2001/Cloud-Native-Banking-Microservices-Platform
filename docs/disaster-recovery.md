@@ -17,14 +17,14 @@
 | Unauthorized infra change | Daily drift detection | pending live (T28) |
 | Ledger inconsistency | Hourly reconciliation + alarm | offline (T15) |
 
-## Targets (proposed, not yet measured)
+## Targets (proposed; database restore measured 2026-11-27)
 | Metric | Target | Measurement method |
 |---|---|---|
 | API read latency | p95 ≤ 500 ms at demo load | CloudWatch `Latency` p95, bounded load test |
 | Approved transfer latency | p95 ≤ 2 s | client-side timing in integration tests |
 | Duplicate postings | 0 in tested retry scenarios | tests + reconciliation |
-| RTO (database) | ≤ 60 min | timed restore drill per runbook |
-| RPO (database) | ≤ 5 min | PITR timestamp vs. last committed journal |
+| RTO (database) | ≤ 60 min | timed restore drill per runbook. **Measured: table restore 2 min 20 s and 4 min 9 s** (two drills, ledger + transfers, synthetic data). This covers restore + read-only validation only; switching services to the restored data was not exercised |
+| RPO (database) | ≤ 5 min | PITR timestamp vs. last committed journal. **Measured: restored to the exact requested second** (05:10:00Z): the transfer posted at 05:11:10Z was absent, everything earlier present |
 
 Single region only. Multi-region DR is not implemented and not claimed;
 active-active financial writes are explicitly out of scope because they
