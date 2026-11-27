@@ -24,10 +24,12 @@ aws dynamodb wait table-exists --table-name novabank-dev-ledger-restored
 Record start/finish times for the RTO measurement.
 
 ## 3. Validate the restored copy before switching
-Run reconciliation against the restored tables locally with read-only credentials:
+Run the **read-only** verifier against the restored tables. Do not point the
+scheduled reconciliation job at them: it writes evidence, an audit row and an
+outbox event, which would publish into the live platform.
 ```bash
-LEDGER_TABLE=novabank-dev-ledger-restored TRANSFERS_TABLE=novabank-dev-transfers-restored \
-  EVIDENCE_BUCKET=novabank-dev-evidence-<acct> python scripts/reconcile_ledger.py
+python3.11 scripts/verify_restore.py --ledger-table novabank-dev-ledger-restored \
+  --transfers-table novabank-dev-transfers-restored --as-of "$T"
 ```
 Must be `BALANCED` (R7 entries acceptable).
 
