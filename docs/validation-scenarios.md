@@ -21,7 +21,7 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T12 | Concurrent transfers cannot overdraw | `test_concurrent_transfers_cannot_overdraw` (10 threads, moto per-call serialisation) | ✅ | ✅ 45889062755 | ☐ |
 | T13 | Self-transfer rejected | `test_self_transfer_is_rejected` | ✅ | ✅ 45889062755 | ☐ |
 | T14 | Failed atomic write → no partial posting | `test_failed_atomic_write_produces_no_partial_posting` (injected failing item) | ✅ | ✅ 45889062755 | ☐ |
-| T15 | Ledger reconciles | `test_reconciliation_balances_after_activity`, property tests, tampering detection | ✅ | ✅ 45889062755 | ☐ |
+| T15 | Ledger reconciles | `test_reconciliation_balances_after_activity`, property tests, tampering detection | ✅ | ✅ 45889062755 | ✅ 2026-11-27 reconciliation run 45947086172: on-demand invoke returned BALANCED (workflow exits non-zero otherwise); hourly reports all BALANCED with SHA-256 evidence |
 | T16 | High-risk transaction held/rejected | `test_high_risk_transfer_is_held_without_posting`, `…rejected` | ✅ | ✅ 45889062755 | ✅ 2026-11-27 (TRF-01M8D6CKRY7D1MSZ22WN $6,000 held PENDING_REVIEW; source balance unchanged at $20,000); reviewer rejection: TRF-01M8DQDNF21D3C5S2QAH $5,500 held (score 60, FR-001/FR-007) → REJECTED, no posting, balances unchanged) |
 | T17 | Unauthorized fraud approval rejected | `test_customer_cannot_approve_held_transfer_or_supply_fraud_approval` | ✅ | ✅ 45889062755 | ☐ |
 | T18 | Authorized approval revalidated | `test_authorised_approval_is_revalidated_before_posting` + balance/tamper/frozen tests | ✅ | ✅ 45889062755 | ✅ 2026-11-27 (reviewer approved TRF-01M8D6CKRY7D1MSZ22WN → COMPLETED; ****1TXA $20,000→$14,000, ****HZBQ $500→$6,500, combined $25,350 unchanged) |
@@ -34,9 +34,9 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T25 | Insecure Terraform blocked | Checkov fails `tests/terraform/fixtures/insecure` (21 failed checks, run locally) | ✅ (local tool) | ✅ 45889062736 | ☐ |
 | T26 | Unapproved deployment prevented | Workflow structure tests; requires GitHub environment protection rules | ◐ static | ☐ | ☐ |
 | T27 | Failed release rolled back | `scripts/deploy_lambda.py` rollback path + `tests/unit/test_deploy_script.py` | ✅ | ✅ | ✅ deploy-services 45904772462: release judged unhealthy → all 10 aliases rolled back automatically (trigger was a false positive, since fixed) |
-| T28 | Drift detected | `drift-detection.yml`; needs live state | ☐ | ☐ | ☐ |
+| T28 | Drift detected | `drift-detection.yml`; needs live state | ☐ | ☐ | ◐ baseline only: drift-detection runs 45947157411 / 45947178232 reported no drift (plan exit 0). Detecting an injected change not yet exercised |
 | T29 | Restore + reconciliation tested | `runbooks/database-recovery.md`; needs live PITR | ☐ | ☐ | ☐ |
 | T30 | Project resources cleaned up | `cleanup.yml` + `scripts/verify_cleanup.sh`; needs live | ☐ | ☐ | ☐ |
 
 **Offline status: 23 verified, 2 partially (static), 1 verified with a local tool, 4 require AWS.**
-**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T08, T11 (UI), T16, T18 and T27 verified (2026-11-26/27); remaining live scenarios pending.
+**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T08, T11 (UI), T15, T16, T18 and T27 verified; T28 clean baseline (2026-11-26/27); remaining live scenarios pending.
