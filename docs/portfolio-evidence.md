@@ -55,6 +55,8 @@ Redact account IDs and other identifiers before publishing.
 
 | deploy-frontend #3 (re-run) | after deploy-role fix `3a3b85c` | **Success**: Cognito-mode SPA built (28 tests), synced to the private S3 bucket, CloudFront invalidated; landing page with sandbox banner served at the CloudFront URL (owner screenshot, 2026-11-26) |
 
+| First live banking session (owner, browser) | 2026-11-26 | Cognito sign-in → profile → checking ($4,850 opening journal) + 2 savings → $250 transfer `TRF-01M8D5AANPKV181M1HFC` COMPLETED; checking $4,600 / savings $500; history shows matching −/+ entries; combined $5,350 = sum of opening deposits |
+
 Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 
 Not yet available: service deployment run IDs, live AWS results, measured latency,
