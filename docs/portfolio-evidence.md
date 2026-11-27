@@ -61,6 +61,7 @@ Redact account IDs and other identifiers before publishing.
 | deploy-frontend #5 / #6 | 2026-11-27 @ e767394 | **Success**: session renewal (`7d84659`) and role-based landing (`37cba77`) live; reviewer sign-in lands directly on `/admin/fraud` |
 | Duplicate-click check (owner, browser) | 2026-11-27 | Double-click on Confirm produced one transfer `TRF-01M8DPM6BPZTKVMESMWB`, a single −$10.00 history line, ****EJKY $4,590 / ****HZBQ $6,510, combined still $25,350 |
 | Insufficient funds (owner, browser) | 2026-11-27 | $300 from Savings ****APZ4 ($250) → `TRF-01M8DQ6A686Y2CFW4WN8` REJECTED `INSUFFICIENT_FUNDS`, "No money moved"; ****APZ4 history still only the opening entry, combined $25,350 |
+| Fraud hold → reviewer rejection (owner, browser) | 2026-11-27 | $5,500 from ****1TXA → `TRF-01M8DQDNF21D3C5S2QAH` PENDING_REVIEW (score 60, FR-001 + FR-007); reviewer rejected → `REJECTED`, queue empty; ****1TXA $14,000 / ****HZBQ $6,510 unchanged, no history entry, combined $25,350 |
 
 Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 

@@ -22,7 +22,7 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T13 | Self-transfer rejected | `test_self_transfer_is_rejected` | ✅ | ✅ 45889062755 | ☐ |
 | T14 | Failed atomic write → no partial posting | `test_failed_atomic_write_produces_no_partial_posting` (injected failing item) | ✅ | ✅ 45889062755 | ☐ |
 | T15 | Ledger reconciles | `test_reconciliation_balances_after_activity`, property tests, tampering detection | ✅ | ✅ 45889062755 | ☐ |
-| T16 | High-risk transaction held/rejected | `test_high_risk_transfer_is_held_without_posting`, `…rejected` | ✅ | ✅ 45889062755 | ✅ 2026-11-27 (TRF-01M8D6CKRY7D1MSZ22WN $6,000 held PENDING_REVIEW; source balance unchanged at $20,000) |
+| T16 | High-risk transaction held/rejected | `test_high_risk_transfer_is_held_without_posting`, `…rejected` | ✅ | ✅ 45889062755 | ✅ 2026-11-27 (TRF-01M8D6CKRY7D1MSZ22WN $6,000 held PENDING_REVIEW; source balance unchanged at $20,000); reviewer rejection: TRF-01M8DQDNF21D3C5S2QAH $5,500 held (score 60, FR-001/FR-007) → REJECTED, no posting, balances unchanged) |
 | T17 | Unauthorized fraud approval rejected | `test_customer_cannot_approve_held_transfer_or_supply_fraud_approval` | ✅ | ✅ 45889062755 | ☐ |
 | T18 | Authorized approval revalidated | `test_authorised_approval_is_revalidated_before_posting` + balance/tamper/frozen tests | ✅ | ✅ 45889062755 | ✅ 2026-11-27 (reviewer approved TRF-01M8D6CKRY7D1MSZ22WN → COMPLETED; ****1TXA $20,000→$14,000, ****HZBQ $500→$6,500, combined $25,350 unchanged) |
 | T19 | Fraud failure prevents posting | `test_fraud_service_failure_prevents_posting` | ✅ | ✅ 45889062755 | ☐ |
