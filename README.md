@@ -22,7 +22,7 @@ Platform, and Security & Compliance projects).
 | Live validation | ✅ 13 of 30 scenarios proven on the running system; all 30 covered in CI or offline |
 | Teardown (T30) | ⏳ after the demo period |
 
-**Case study:** [`docs/case-study.html`](docs/case-study.html) (architecture, live evidence, screenshots).
+**Case study:** [`docs/case-study.html`](docs/case-study.html) (architecture, live evidence, screenshots) · [final report](docs/phase-reports/final-report.md) · estimated cost ≈ $5.50–9.50/month at demo load ([cost model](docs/cost-model.md)).
 Evidence: [validation register](docs/validation-scenarios.md) · [portfolio evidence log](docs/portfolio-evidence.md).
 
 | Fraud review queue | Balances after approval |
@@ -53,7 +53,7 @@ owned by caller) · credit savings · two immutable entries · journal header
 ## Quick start (no AWS account needed)
 ```bash
 make install          # venv + pinned dev dependencies
-make test             # 170 tests: unit, contract, security, invariants, concurrency, terraform-static
+make test             # 177 tests: unit, contract, security, invariants, concurrency, terraform-static
 make local-api        # offline API on http://127.0.0.1:8080 (moto-backed)
 make demo             # in another shell: $250 transfer + fraud hold/approve/reject
 cd frontend && npm ci && npm run dev   # UI on http://localhost:5173 (sandbox mode)
@@ -84,7 +84,7 @@ Terraform (offline): `make tf-validate tf-test`. Security scans: `make security`
 [Security model](docs/security-model.md) · [Threat model](docs/threat-model.md) ·
 [Compliance mapping](docs/compliance-mapping.md) · [Cost model](docs/cost-model.md) ·
 [Bootstrap](docs/bootstrap-runbook.md) · [Deployment](docs/deployment-runbook.md) ·
-[DR](docs/disaster-recovery.md) · [Evidence log](docs/portfolio-evidence.md)
+[DR](docs/disaster-recovery.md) · [Evidence log](docs/portfolio-evidence.md) · [Final report](docs/phase-reports/final-report.md)
 
 ## Guardrails
 No AWS changes without approval · no force-push or unapproved merges · no real

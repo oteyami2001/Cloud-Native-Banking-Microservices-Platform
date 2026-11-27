@@ -1,10 +1,10 @@
 # Deployment runbook (dev)
 
 Prerequisites: bootstrap complete, GitHub environments and variables set,
-explicit approval for Phase 8.
+explicit owner approval for each apply (done for dev on 2026-11-26).
 
 1. **Plan**: run `terraform-plan` (dispatch). Review the step summary and the
-   `tfplan.txt` artifact. Expect ~120 resources on first apply.
+   `tfplan.txt` artifact. First dev apply created 182 resources (2026-11-26).
 2. **Apply**: run `terraform-apply` with the plan run id; approve the `dev`
    environment. The job verifies plan checksum and commit before applying.
 3. **Seed**: create GL-1000 (idempotent) with the ledger role or an admin session:

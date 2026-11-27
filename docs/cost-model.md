@@ -1,5 +1,29 @@
 # Cost model (dev, us-east-2)
 
+## Projected cost of the deployed demo (2026-11-27)
+
+This is an **estimate**, not a bill. It uses the deployed configuration (counted from
+Terraform: 10 functions, 31 alarms, 9 tables, 1 dashboard) and the real demo traffic
+(a few hundred API calls plus the schedules), priced at AWS public list prices that were
+not re-verified against the Price List API. Actual spend must be read from Cost Explorer,
+which lags by up to 24 hours.
+
+| Driver | Basis | Projected / month |
+|---|---|---|
+| CloudWatch alarms | 31 standard alarms × $0.10 | $3.10 |
+| CloudWatch custom metrics | ~7 series published every hour by schedules (outbox and ledger reconciliation, consumers) × $0.30; other series are prorated by the hours they are published | $2.00 – $2.50 |
+| CloudWatch dashboard | 1 dashboard; free if within the account's first 3 | $0.00 – $3.00 |
+| Lambda, API Gateway, SQS, EventBridge, Streams | ~12,000 scheduled invocations + demo traffic | < $0.20 |
+| DynamoDB (on demand, PITR) | kilobytes of synthetic data | < $0.10 |
+| Logs, X-Ray, S3 (state, artifacts, evidence, site), KMS requests | low volume | $0.10 – $0.50 |
+| Cognito, CloudFront | 2 users; low traffic | $0.00 |
+| **Total at demo load** | | **≈ $5.50 – $9.50 per month (≈ $0.20 – $0.30 per day)** |
+
+At the heavier workload assumed below (50,000 API requests per month) the estimate rises
+to about $13 – $18, almost all of it CloudWatch. Restore drills (T29) add cents. The
+$25 budget alert stays active until teardown (T30), which removes all of these charges.
+
+
 > **Status: preliminary.** Unit prices below are public on-demand list prices
 > as understood at the time of writing; they were **not** re-verified against
 > the AWS Price List API from this environment (no AWS access). Free-tier
