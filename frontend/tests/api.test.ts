@@ -35,4 +35,19 @@ describe("BankApi", () => {
     expect(fetchImpl.mock.calls[0]![0]).toBe("https://api.example/v1/accounts/..%2Fadmin");
     expect((fetchImpl.mock.calls[0]![1]!.headers as Record<string, string>).authorization).toBeUndefined();
   });
+
+  it("awaits async token providers", async () => {
+    const fetchImpl = fakeFetch(200, { items: [] });
+    const api = new BankApi(async () => "renewed", "https://api.example", fetchImpl as unknown as typeof fetch);
+    await api.accounts();
+    expect((fetchImpl.mock.calls[0]![1]!.headers as Record<string, string>).authorization).toBe("Bearer renewed");
+  });
+
+  it("reports an expired session on 401 and calls the handler", async () => {
+    const onUnauthorized = vi.fn();
+    const api = new BankApi(() => "old", "https://api.example", fakeFetch(401, { message: "Unauthorized" }) as unknown as typeof fetch, onUnauthorized);
+    const err = await api.accounts().catch((e) => e);
+    expect(err.code).toBe("SESSION_EXPIRED");
+    expect(onUnauthorized).toHaveBeenCalledOnce();
+  });
 });

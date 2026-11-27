@@ -12,7 +12,7 @@ export class ApiError extends Error {
   }
 }
 
-export type TokenProvider = () => string | null;
+export type TokenProvider = () => string | null | Promise<string | null>;
 
 export function newIdempotencyKey(): string {
   return crypto.randomUUID().replace(/-/g, "");
@@ -23,10 +23,11 @@ export class BankApi {
     private token: TokenProvider,
     private base = config.apiBaseUrl,
     private fetchImpl: typeof fetch = (...args) => fetch(...args),
+    private onUnauthorized?: () => void,
   ) {}
 
   private async request<T>(method: string, path: string, body?: unknown, extraHeaders: Record<string, string> = {}): Promise<T> {
-    const token = this.token();
+    const token = await this.token();
     const headers: Record<string, string> = { "content-type": "application/json", ...extraHeaders };
     if (token) headers.authorization = `Bearer ${token}`;
     const res = await this.fetchImpl(`${this.base}${path}`, {
@@ -37,6 +38,10 @@ export class BankApi {
     });
     const text = await res.text();
     const data = text ? JSON.parse(text) : null;
+    if (res.status === 401) {
+      this.onUnauthorized?.();
+      throw new ApiError(401, "SESSION_EXPIRED", "Your session has expired. Please sign in again.", data);
+    }
     if (!res.ok) {
       const err = data?.error ?? {};
       throw new ApiError(res.status, err.code ?? "HTTP_ERROR", err.message ?? `Request failed (${res.status})`, data);
