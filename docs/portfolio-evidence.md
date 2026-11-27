@@ -60,6 +60,7 @@ Redact account IDs and other identifiers before publishing.
 | Fraud hold → reviewer approval (owner, browser) | 2026-11-27 | $6,000 transfer `TRF-01M8D6CKRY7D1MSZ22WN` held PENDING_REVIEW (score 60, FR-001 + FR-007, policy 2026.11.1) with no posting (T16). Reviewer account (`fraud-reviewers`) approved it from the queue → `COMPLETED`; ****1TXA $20,000 → $14,000, ****HZBQ $500 → $6,500, combined $25,350 unchanged (T18). Reconciliation page lists hourly reports, all BALANCED, each with a SHA-256 evidence hash |
 | deploy-frontend #5 / #6 | 2026-11-27 @ e767394 | **Success**: session renewal (`7d84659`) and role-based landing (`37cba77`) live; reviewer sign-in lands directly on `/admin/fraud` |
 | Duplicate-click check (owner, browser) | 2026-11-27 | Double-click on Confirm produced one transfer `TRF-01M8DPM6BPZTKVMESMWB`, a single −$10.00 history line, ****EJKY $4,590 / ****HZBQ $6,510, combined still $25,350 |
+| Insufficient funds (owner, browser) | 2026-11-27 | $300 from Savings ****APZ4 ($250) → `TRF-01M8DQ6A686Y2CFW4WN8` REJECTED `INSUFFICIENT_FUNDS`, "No money moved"; ****APZ4 history still only the opening entry, combined $25,350 |
 
 Dev endpoints (non-secret): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 

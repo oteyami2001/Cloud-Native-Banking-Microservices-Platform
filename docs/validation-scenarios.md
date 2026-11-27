@@ -14,7 +14,7 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T05 | Account creation | `test_account_creation_with_documented_opening_balance` | ✅ | ✅ 45889062755 | ✅ 2026-11-26 (checking $4,850 + savings via documented opening journals) |
 | T06 | Balance retrieval | `test_balance_retrieval` | ✅ | ✅ 45889062755 | ✅ 2026-11-26 (balances shown from ledger) |
 | T07 | Valid internal transfer | `test_valid_internal_transfer_succeeds` | ✅ | ✅ 45889062755 | ✅ 2026-11-26 (TRF-01M8D5AANPKV181M1HFC: checking −$250 / savings +$250; total conserved at $5,350) |
-| T08 | Insufficient funds rejected | `test_insufficient_funds_is_rejected_without_posting` | ✅ | ✅ 45889062755 | ☐ |
+| T08 | Insufficient funds rejected | `test_insufficient_funds_is_rejected_without_posting` | ✅ | ✅ 45889062755 | ✅ 2026-11-27 ($300 from ****APZ4 holding $250 → TRF-01M8DQ6A686Y2CFW4WN8 REJECTED INSUFFICIENT_FUNDS; no entry posted, all balances unchanged, combined $25,350) |
 | T09 | Zero/negative/malformed amounts rejected | `test_zero_negative_malformed…` ×9, float parse test | ✅ | ✅ 45889062755 | ☐ |
 | T10 | Currency mismatch rejected | `test_unsupported_currency_and_currency_mismatch_are_rejected` | ✅ | ✅ 45889062755 | ☐ |
 | T11 | Duplicate transfer posts once | `test_duplicate_request_does_not_post_twice`, concurrent duplicate test | ✅ | ✅ 45889062755 | ✅ 2026-11-27 browser double-click on Confirm: one transfer TRF-01M8DPM6BPZTKVMESMWB, one −$10.00 entry; ****EJKY $4,590, ****HZBQ $6,510 (server-side replay covered by CI) |
@@ -39,4 +39,4 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T30 | Project resources cleaned up | `cleanup.yml` + `scripts/verify_cleanup.sh`; needs live | ☐ | ☐ | ☐ |
 
 **Offline status: 23 verified, 2 partially (static), 1 verified with a local tool, 4 require AWS.**
-**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T11 (UI), T16, T18 and T27 verified (2026-11-26/27); remaining live scenarios pending.
+**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T08, T11 (UI), T16, T18 and T27 verified (2026-11-26/27); remaining live scenarios pending.
