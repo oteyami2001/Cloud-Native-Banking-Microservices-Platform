@@ -17,7 +17,7 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T08 | Insufficient funds rejected | `test_insufficient_funds_is_rejected_without_posting` | ✅ | ✅ 45889062755 | ☐ |
 | T09 | Zero/negative/malformed amounts rejected | `test_zero_negative_malformed…` ×9, float parse test | ✅ | ✅ 45889062755 | ☐ |
 | T10 | Currency mismatch rejected | `test_unsupported_currency_and_currency_mismatch_are_rejected` | ✅ | ✅ 45889062755 | ☐ |
-| T11 | Duplicate transfer posts once | `test_duplicate_request_does_not_post_twice`, concurrent duplicate test | ✅ | ✅ 45889062755 | ☐ |
+| T11 | Duplicate transfer posts once | `test_duplicate_request_does_not_post_twice`, concurrent duplicate test | ✅ | ✅ 45889062755 | ✅ 2026-11-27 browser double-click on Confirm: one transfer TRF-01M8DPM6BPZTKVMESMWB, one −$10.00 entry; ****EJKY $4,590, ****HZBQ $6,510 (server-side replay covered by CI) |
 | T12 | Concurrent transfers cannot overdraw | `test_concurrent_transfers_cannot_overdraw` (10 threads, moto per-call serialisation) | ✅ | ✅ 45889062755 | ☐ |
 | T13 | Self-transfer rejected | `test_self_transfer_is_rejected` | ✅ | ✅ 45889062755 | ☐ |
 | T14 | Failed atomic write → no partial posting | `test_failed_atomic_write_produces_no_partial_posting` (injected failing item) | ✅ | ✅ 45889062755 | ☐ |
@@ -39,4 +39,4 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T30 | Project resources cleaned up | `cleanup.yml` + `scripts/verify_cleanup.sh`; needs live | ☐ | ☐ | ☐ |
 
 **Offline status: 23 verified, 2 partially (static), 1 verified with a local tool, 4 require AWS.**
-**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T16, T18 and T27 verified (2026-11-26/27); remaining live scenarios pending.
+**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T11 (UI), T16, T18 and T27 verified (2026-11-26/27); remaining live scenarios pending.
