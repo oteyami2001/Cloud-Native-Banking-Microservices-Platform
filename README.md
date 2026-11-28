@@ -29,6 +29,14 @@ Evidence: [validation register](docs/validation-scenarios.md) · [portfolio evid
 |---|---|
 | ![Fraud review queue](docs/screenshots/review-queue.webp) | ![Balances after approval](docs/screenshots/balances-after-approval.webp) |
 
+**AWS console:** [all 17 screenshots](docs/aws-console-evidence.md) of the live dev environment (Lambda, API Gateway, Cognito, DynamoDB, EventBridge, SQS, S3, CloudWatch, IAM, Budgets).
+
+| Lambda: 10 functions | DynamoDB: 9 tables |
+|---|---|
+| ![Lambda functions](docs/screenshots/aws/lambda-functions.webp) | ![DynamoDB tables](docs/screenshots/aws/dynamodb-tables.webp) |
+| **CloudWatch: 31 alarms** | **IAM: one role per function** |
+| ![CloudWatch alarms](docs/screenshots/aws/cloudwatch-alarms.webp) | ![IAM roles](docs/screenshots/aws/iam-roles.webp) |
+
 ## Architecture
 ```mermaid
 flowchart LR
@@ -84,7 +92,7 @@ Terraform (offline): `make tf-validate tf-test`. Security scans: `make security`
 [Security model](docs/security-model.md) · [Threat model](docs/threat-model.md) ·
 [Compliance mapping](docs/compliance-mapping.md) · [Cost model](docs/cost-model.md) ·
 [Bootstrap](docs/bootstrap-runbook.md) · [Deployment](docs/deployment-runbook.md) ·
-[DR](docs/disaster-recovery.md) · [Evidence log](docs/portfolio-evidence.md) · [Final report](docs/phase-reports/final-report.md)
+[DR](docs/disaster-recovery.md) · [AWS console screenshots](docs/aws-console-evidence.md) · [Evidence log](docs/portfolio-evidence.md) · [Final report](docs/phase-reports/final-report.md)
 
 ## Guardrails
 No AWS changes without approval · no force-push or unapproved merges · no real

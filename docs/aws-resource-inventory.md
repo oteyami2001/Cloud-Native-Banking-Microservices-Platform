@@ -2,7 +2,8 @@
 
 Everything the project created in account 666102401492, grouped by AWS service, with
 where to find it in the console and what is worth a screenshot. Names come from the
-Terraform code; the live list can be printed with the commands at the end.
+Terraform code; the live list can be printed with the commands at the end. The screenshots
+taken so far are in [AWS console evidence](aws-console-evidence.md).
 
 Totals: **25 bootstrap resources** (`terraform/bootstrap`) and **182 dev resources**
 (`terraform/envs/dev`). Terraform counts every setting as a resource (for example a
@@ -70,7 +71,7 @@ Console: **DynamoDB → Tables**, search `novabank-dev`.
 | `novabank-dev-notifications` | GSI1 |
 | `novabank-dev-audit` | reconciliation reports |
 
-All on-demand, encrypted, with point-in-time recovery.
+All on-demand and encrypted. Point-in-time recovery is on for the financial tables; `novabank-dev-notifications` holds derived data and has it off.
 
 Screenshots: the table list; `novabank-dev-ledger` → **Backups** (PITR enabled);
 `novabank-dev-outbox` → **Exports and streams** (stream on); **Explore items** on the
