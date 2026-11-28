@@ -65,8 +65,17 @@ Redact account IDs and other identifiers before publishing.
 | reconciliation (on demand) | [45947086172](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45947086172) | **Success**: ledger reconciliation `:live` returned BALANCED. Earlier scheduled run [45901508082](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45901508082) failed with `Function not found …:live` because it fired before the first service deployment created the alias |
 | drift-detection ×2 | [45947157411](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45947157411), [45947178232](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/45947178232) | **No drift detected**: `terraform plan -detailed-exitcode` returned 0 against live dev (182 resources) |
 | Point-in-time restore drill (owner, CloudShell) | 2026-11-27 | Drill 1: `novabank-dev-{ledger,transfers}` restored to 05:10:00Z in **4 min 9 s**, but the verifier could not run (Python 3.11 in CloudShell lacked pip) and the copies were deleted unchecked. Drill 2: restored in **2 min 20 s**; `scripts/verify_restore.py` (read-only) → **BALANCED**, 5 accounts / 6 journals / 2 transfers, assets = liabilities = $25,350.00; ****EJKY $4,600 and ****HZBQ $6,500 (state before the 05:11:10Z $10 transfer, proving the point in time). Temporary tables deleted. Live tables untouched |
-| cleanup #1 (T30) | [46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662) @ b544cb0 | **Success**: `terraform destroy` → 182 resources destroyed in 3 min 50 s (CloudFront took 3 min 12 s); `verify_cleanup.sh` found nothing left. Bootstrap retained |
 
 Dev endpoints (non-secret, **removed 2026-11-28 by T30**; a rebuild gets new ones): API `https://z1czl3y3jh.execute-api.us-east-2.amazonaws.com`, site `https://d163c3lie2sp9w.cloudfront.net`, Cognito domain `https://novabank-dev-1492.auth.us-east-2.amazoncognito.com`.
 
-Not yet available: measured latency, a full restore switch-over, actual costs.
+## 2026-11-28 — Teardown (T30)
+| Evidence | Run / date | Result |
+|---|---|---|
+| cleanup #1 | [46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662) @ b544cb0, 02:30–02:34 UTC | **Success**. Started by the owner with the typed confirmation `destroy-novabank-dev` and approved on the protected `cleanup` environment. `terraform destroy` → **"Destroy complete! Resources: 182 destroyed."** in 3 min 50 s (CloudFront distribution 3 min 12 s of that) |
+| `scripts/verify_cleanup.sh` (same run) | 02:34 UTC | No Lambda functions, DynamoDB tables, SQS queues, event buses, HTTP APIs, Cognito pools, buckets, log groups or budgets left; step exited 0 |
+| AWS console check (owner) | 2026-11-28 | us-east-2: Lambda 0 functions / 0 bytes code storage; DynamoDB 0 tables; CloudWatch 0 alarms, 0 dashboards ([screenshots](aws-console-evidence.md#after-teardown-t30-2026-11-28)) |
+| Retained by design | — | Bootstrap only: Terraform state bucket, artifact bucket, 4 GitHub OIDC roles. Rebuild: `scripts/rebuild_from_cloudshell.sh` |
+| Verification gap found and fixed | commit 41ce5cf | The cleanup role cannot call `iam:ListRoles` or `tag:GetResources`, and the script printed "none" for failed calls, so its IAM-role and tag lines proved nothing. The 10 service roles were in the destroyed state. The script now prints NOT CHECKED when a call fails |
+| Open item before teardown | 2026-11-27 | `novabank-dev-outbox-stream-failures` held 1 message (alarm in ALARM); not investigated, deleted with the queue |
+
+Not available: measured latency, a full restore switch-over (both need a rebuild), actual costs (read from Cost Explorer for 26–28 November, see the [cost model](cost-model.md)).
