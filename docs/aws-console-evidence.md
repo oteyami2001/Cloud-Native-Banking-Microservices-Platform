@@ -95,3 +95,13 @@ configured. Setting `alert_email` in `terraform/envs/dev` adds alerts at 50%, 80
 100% of actual spend and 100% of forecast spend.
 
 ![Budgets: novabank-dev-monthly](screenshots/aws/budget.webp)
+
+## After teardown (T30, 2026-11-28)
+The same console pages after the `cleanup` workflow: no Lambda functions, no DynamoDB
+tables and no CloudWatch alarms or dashboards left in us-east-2.
+
+![Lambda after teardown: 0 functions](screenshots/aws/teardown-lambda.webp)
+
+![DynamoDB after teardown: 0 tables](screenshots/aws/teardown-dynamodb.webp)
+
+![CloudWatch after teardown: 0 alarms, 0 dashboards](screenshots/aws/teardown-cloudwatch.webp)
