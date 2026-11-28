@@ -1,5 +1,9 @@
 # Deployment runbook (dev)
 
+> **Status:** dev was deployed with these steps on 2026-11-26 and torn down on
+> 2026-11-28 (T30, see [Teardown](#teardown-t30)). The bootstrap layer is still in place,
+> so the steps below rebuild dev from scratch.
+
 Prerequisites: bootstrap complete, GitHub environments and variables set,
 explicit owner approval for each apply (done for dev on 2026-11-26).
 
@@ -28,6 +32,33 @@ bootstrap, dev apply (plan shown first), GL-1000 seed, Lambda build and deploy w
 rollback, frontend build and upload, optional Cognito users, and a smoke test. Every
 step that changes AWS asks you to type `yes`. It is safe to re-run. Use the GitHub
 pipelines for normal changes; this script is for a full rebuild, for example after T30.
+
+### After a rebuild
+* The API, site and Cognito addresses change. Update the GitHub variables `API_BASE_URL`,
+  `SITE_URL`, `COGNITO_DOMAIN`, `COGNITO_CLIENT_ID`, `FRONTEND_BUCKET` and
+  `FRONTEND_DISTRIBUTION_ID` from `terraform output platform` (the script prints them),
+  then re-share the new site URL.
+* Cognito users and all demo data are gone; recreate users (step 7) and seed GL-1000 (step 3).
+* Set `alert_email` in `terraform/envs/dev` if you want budget e-mails; dev ran without them.
+
+## Teardown (T30)
+1. GitHub → **Actions → cleanup → Run workflow**, type `destroy-novabank-dev`.
+2. Approve the `cleanup` environment. The job assumes `novabank-github-cleanup`, runs
+   `terraform destroy` on `terraform/envs/dev` with `evidence_force_destroy=true` (so the
+   versioned evidence bucket can be emptied), then `scripts/verify_cleanup.sh`.
+3. Read the step summary. Every line should say `none`. A `NOT CHECKED` line means the
+   cleanup role may not list that resource type (`iam:ListRoles`, `tag:GetResources`); check it in
+   CloudShell, for example
+   `aws iam list-roles --query "Roles[?starts_with(RoleName,'novabank-dev')].RoleName" --output text`.
+4. Record the run in `docs/validation-scenarios.md` and `docs/portfolio-evidence.md`.
+
+The bootstrap layer (state bucket, artifact bucket, GitHub OIDC roles) is never destroyed
+by this workflow. Expect about 4 minutes, most of it CloudFront disabling and deleting the
+distribution.
+
+**Done 2026-11-28:** run [46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662) on `main` @ b544cb0, 02:30–02:34 UTC: "182 destroyed" in
+3 min 50 s, verification clean, console showed 0 functions, 0 tables, 0 alarms
+([evidence](aws-console-evidence.md#after-teardown-t30-2026-11-28)).
 
 ## Rollback
 * Application: re-run `deploy-services` with an earlier build, or
