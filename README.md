@@ -13,23 +13,25 @@ evidence, and a DevSecOps pipeline with GitHub OIDC.
 Project 4 of a cloud-engineering portfolio (after AIOps, Internal Developer
 Platform, and Security & Compliance projects).
 
-## Current status
+## Status
+The AWS dev environment ran from 26 to 28 November 2026 and was then removed by the approved teardown (T30). There is no live site now; everything below can be rebuilt from code.
+
 | Area | Status |
 |---|---|
 | Design, services, ledger, fraud, events, frontend | ✅ complete; 177 Python + 31 frontend tests pass in CI |
 | Bootstrap (state, artifacts, GitHub OIDC roles) | ✅ applied 2026-11-26 |
 | Dev environment (182 resources via Terraform + GitHub Actions) | ✅ deployed 2026-11-26, torn down 2026-11-28 (rebuild: [`scripts/rebuild_from_cloudshell.sh`](scripts/rebuild_from_cloudshell.sh)) |
-| Live validation | ✅ 14 of 30 scenarios proven on the running system; all 30 covered in CI or offline |
-| Teardown (T30) | ✅ 2026-11-28: `cleanup` run [46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662) destroyed all 182 dev resources; verification found none left. Bootstrap kept |
+| Live validation | ✅ 14 of 30 scenarios proven on the live system (T01–T03, T05–T08, T11, T15, T16, T18, T27, T29, T30); all 30 covered in CI or offline |
+| Teardown (T30) | ✅ 2026-11-28: `cleanup` run [46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662) destroyed all 182 dev resources in 3 min 50 s; automated check and AWS console found none left ([after-teardown screenshots](docs/aws-console-evidence.md#after-teardown-t30-2026-11-28)). Only the bootstrap layer is kept |
 
-**Case study:** [`docs/case-study.html`](docs/case-study.html) (architecture, live evidence, screenshots) · [final report](docs/phase-reports/final-report.md) · estimated cost ≈ $5.50–9.50/month at demo load ([cost model](docs/cost-model.md)).
+**Case study:** [`docs/case-study.html`](docs/case-study.html) (architecture, live evidence, screenshots) · [final report](docs/phase-reports/final-report.md) · estimated cost ≈ $5.50–9.50/month while running, ≈ $0.25–0.50 for the whole demo, cents per month since teardown ([cost model](docs/cost-model.md)).
 Evidence: [validation register](docs/validation-scenarios.md) · [portfolio evidence log](docs/portfolio-evidence.md).
 
 | Fraud review queue | Balances after approval |
 |---|---|
 | ![Fraud review queue](docs/screenshots/review-queue.webp) | ![Balances after approval](docs/screenshots/balances-after-approval.webp) |
 
-**AWS console:** [all 17 screenshots](docs/aws-console-evidence.md) of the live dev environment (Lambda, API Gateway, Cognito, DynamoDB, EventBridge, SQS, S3, CloudWatch, IAM, Budgets).
+**AWS console:** [17 screenshots](docs/aws-console-evidence.md) of the dev environment while it was live (Lambda, API Gateway, Cognito, DynamoDB, EventBridge, SQS, S3, CloudWatch, IAM, Budgets), plus 3 after teardown.
 
 | Lambda: 10 functions | DynamoDB: 9 tables |
 |---|---|
