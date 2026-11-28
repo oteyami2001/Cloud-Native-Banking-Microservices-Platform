@@ -4,6 +4,7 @@ Legend — **Offline**: passed locally against moto with no AWS credentials
 (`pytest`, 2026-11-26, 170 tests). **CI**: passed in a GitHub Actions run
 (record run id). **Live**: verified in the deployed dev environment (record
 timestamp + evidence). Nothing is marked Live or CI until it has actually run.
+The dev environment existed from 2026-11-26 to 2026-11-28; T30 removed it.
 
 | ID | Scenario | Evidence (test / tool) | Offline | CI | Live |
 |---|---|---|---|---|---|
@@ -39,4 +40,9 @@ timestamp + evidence). Nothing is marked Live or CI until it has actually run.
 | T30 | Project resources cleaned up | `cleanup.yml` + `scripts/verify_cleanup.sh`; needs live | ☐ | ✅ [46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662) | ✅ 2026-11-28 02:30–02:34 UTC: `terraform destroy` → "182 destroyed"; verification reported no Lambda functions, tables, queues, buses, APIs, user pools, buckets, log groups or budgets left. Bootstrap (state + artifact buckets, GitHub OIDC roles) retained by design. The 10 service IAM roles were in the destroyed Terraform state; the script's IAM-role and tag checks could not be relied on because the cleanup role lacks `iam:ListRoles` and `tag:GetResources` (script now reports such checks as NOT CHECKED). Console after teardown: 0 Lambda functions, 0 DynamoDB tables, 0 alarms ([screenshots](aws-console-evidence.md#after-teardown-t30-2026-11-28)) |
 
 **Offline status: 23 verified, 2 partially (static), 1 verified with a local tool, 4 require AWS.**
-**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T08, T11 (UI), T15, T16, T18, T27, T29 and T30 verified; T28 clean baseline (2026-11-26/27); remaining live scenarios pending.
+**GitHub CI (2026-11-26, `main` @ e038c6e):** T01–T23 passed in `ci` run 45889062755; T25 negative test passed in `security-scan` run 45889062736. Live AWS: T01, T02, T03, T05, T06, T07, T08, T11 (UI), T15, T16, T18, T27, T29 and T30 verified; T28 clean baseline (2026-11-26/27).
+
+**Final live status (environment torn down 2026-11-28 by T30):** 14 of 30 verified live
+(T01–T03, T05–T08, T11, T15, T16, T18, T27, T29, T30), 1 partial (T28 baseline), 15 not
+run live (T04, T09, T10, T12–T14, T17, T19–T26). Those 15 stay covered by the Offline and CI
+columns; running them live needs a rebuild (`scripts/rebuild_from_cloudshell.sh`).
