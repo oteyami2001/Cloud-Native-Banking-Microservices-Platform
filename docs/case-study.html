@@ -113,14 +113,14 @@ footer { padding-block: 2rem 3rem; border-top: 1px solid var(--line); color: var
     <div class="stack">
       <span class="eyebrow">Portfolio · Project 4 · AWS us-east-2</span>
       <h1>NovaBank Digital</h1>
-      <p class="lede">A serverless banking platform on AWS where every transfer is an atomic double-entry posting. Seven microservices, a reviewed fraud hold, a transactional outbox and audit evidence. All of it was built with Terraform and GitHub Actions and tested live in a real AWS account.</p>
+      <p class="lede">A serverless banking platform on AWS where every transfer is an atomic double-entry posting. Seven microservices, a reviewed fraud hold, a transactional outbox and audit evidence. All of it was built with Terraform and GitHub Actions and tested live in a real AWS account, then torn down cleanly.</p>
       <span class="banner">Synthetic sandbox. No real money, customers or payment networks.</span>
     </div>
     <div class="facts" role="list">
       <div role="listitem"><strong>7 + 3</strong><span>microservices + background workers on Lambda</span></div>
-      <div role="listitem"><strong>182</strong><span>AWS resources in dev, all from Terraform</span></div>
+      <div role="listitem"><strong>182</strong><span>AWS resources in dev, all from Terraform; all removed in under 4 min at teardown</span></div>
       <div role="listitem"><strong>208</strong><span>automated tests (177 Python, 31 frontend)</span></div>
-      <div role="listitem"><strong>13 / 30</strong><span>validation scenarios proven on the live system</span></div>
+      <div role="listitem"><strong>14 / 30</strong><span>validation scenarios proven on the live system</span></div>
       <div role="listitem"><strong>2 min 20 s</strong><span>measured point-in-time table restore</span></div>
       <div role="listitem"><strong>$5.50–9.50</strong><span>estimated monthly cost at demo load, no idle servers</span></div>
     </div>
@@ -235,7 +235,7 @@ flowchart LR
   <div class="section-head read">
     <span class="eyebrow" style="color: var(--teal)">Live evidence</span>
     <h2>What was proven on the running system</h2>
-    <p class="muted">All 30 scenarios have automated tests in CI. The rows below were also run against the deployed dev environment on 26–27 November 2026, in a browser, in CloudShell or from GitHub Actions.</p>
+    <p class="muted">All 30 scenarios have automated tests in CI. The rows below were also run against the deployed dev environment on 26–28 November 2026, in a browser, in CloudShell or from GitHub Actions.</p>
   </div>
   <div class="scroll">
     <table>
@@ -255,14 +255,14 @@ flowchart LR
       </tbody>
     </table>
   </div>
-  <p class="small muted" style="margin-top: .8rem">Also live: T01 and T02 (infrastructure and pipeline). The full register with run IDs is in <code>docs/validation-scenarios.md</code> and <code>docs/portfolio-evidence.md</code>.</p>
+  <p class="small muted" style="margin-top: .8rem">Also live: T01 and T02 (infrastructure and pipeline). The full register with run IDs is in <code>docs/validation-scenarios.md</code> and <code>docs/portfolio-evidence.md</code>. AWS console screenshots, before and after teardown, are in <a href="aws-console-evidence.md"><code>docs/aws-console-evidence.md</code></a>.</p>
 </section>
 
 <section id="screens">
   <div class="section-head read">
     <span class="eyebrow" style="color: var(--teal)">Screens</span>
     <h2>The live sandbox</h2>
-    <p class="muted">Screenshots from the deployed CloudFront site, signed in through Cognito as a synthetic customer and as a fraud reviewer.</p>
+    <p class="muted">Screenshots from the deployed CloudFront site, taken before the teardown, signed in through Cognito as a synthetic customer and as a fraud reviewer.</p>
   </div>
   <div class="shots">
     <figure><img src="screenshots/landing.webp" alt="NovaBank landing page with a synthetic-sandbox banner and four feature cards" width="1400" height="614" loading="lazy"><figcaption><strong>Landing page.</strong> Every screen carries the synthetic-data banner.</figcaption></figure>
@@ -300,7 +300,7 @@ flowchart LR
   </div>
   <div class="read stack small muted">
     <p>A portfolio sandbox. It holds no real funds or personal data and makes no claim of PCI DSS, SOC 2 or banking-regulator compliance. Controls are mapped to frameworks for learning only.</p>
-    <p>It runs in a single region. Point-in-time restore was measured, but switching the live services onto restored tables was not exercised. Latency targets are still to be measured, and cost is an estimate rather than a bill.</p>
+    <p>It ran in a single region and was torn down on 28 November 2026, so there is no live site to visit; the whole environment can be rebuilt from code. Point-in-time restore was measured, but switching the live services onto restored tables was not exercised. Latency targets were not measured before teardown, and cost is an estimate rather than a bill.</p>
   </div>
 </section>
 
