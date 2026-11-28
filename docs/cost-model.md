@@ -1,6 +1,26 @@
 # Cost model (dev, us-east-2)
 
-## Projected cost of the deployed demo (2026-11-27)
+## After teardown (T30, 2026-11-28)
+
+The dev environment existed for about 29 hours: created 2026-11-26 21:33 UTC, destroyed
+2026-11-28 02:34 UTC by the `cleanup` workflow
+([run 46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662)).
+All 182 dev resources are gone, so the per-month figures below no longer accrue.
+
+| Period | Estimate |
+|---|---|
+| Whole demo (≈ 1.2 days at $0.20–0.30 per day, plus restore drills) | **≈ $0.25 – $0.50** |
+| From now on: bootstrap only (Terraform state and artifact buckets, a few MB in S3; IAM roles and the OIDC provider are free) | **≈ $0.01 – $0.10 per month** |
+
+Still an estimate. The `novabank-dev-monthly` budget was deleted with the environment, so
+read the actual figure in **Cost Explorer**: daily granularity, 26–28 November 2026, filter
+on the tag `Project = Cloud-Native-Banking-Microservices-Platform` (the tag must be
+activated as a cost-allocation tag in Billing, otherwise filter by service and date).
+Billing data can take a day or two to settle. A rebuild with
+`scripts/rebuild_from_cloudshell.sh` brings the monthly costs below back.
+
+
+## Projected cost of the deployed demo (2026-11-27, while it was running)
 
 This is an **estimate**, not a bill. It uses the deployed configuration (counted from
 Terraform: 10 functions, 31 alarms, 9 tables, 1 dashboard) and the real demo traffic
@@ -21,14 +41,15 @@ which lags by up to 24 hours.
 
 At the heavier workload assumed below (50,000 API requests per month) the estimate rises
 to about $13 – $18, almost all of it CloudWatch. Restore drills (T29) add cents. The
-$25 budget (no e-mail alerts were configured) stayed in place until teardown. T30 ran on 2026-11-28 and removed all of these charges; only the bootstrap S3 buckets remain, at a few cents per month.
+$25 budget (no e-mail alerts were configured) stayed in place until teardown. T30 ran on 2026-11-28 and removed all of these charges (see the top of this page).
 
 
 > **Status: preliminary.** Unit prices below are public on-demand list prices
 > as understood at the time of writing; they were **not** re-verified against
 > the AWS Price List API from this environment (no AWS access). Free-tier
-> eligibility is **not** assumed. Re-check with the AWS Pricing Calculator
-> before the Phase 8 deployment decision. A budget is an alert, not a cap.
+> eligibility is **not** assumed. This was the pre-deployment estimate used for the
+> Phase 8 decision; re-check with the AWS Pricing Calculator before any rebuild.
+> A budget is an alert, not a cap.
 
 ## Workload assumption (synthetic demo month)
 50,000 API requests · 5,000 transfers · ~160,000 Lambda invocations
@@ -85,4 +106,4 @@ reduce EMF metric series (each `Decision`/`Reason` value is a separate metric).
 The budget filters on the `Project` cost-allocation tag (must be activated in
 Billing). Untagged usage (e.g. CloudWatch metrics, some data transfer) and
 account-wide services (GuardDuty, Config, Security Hub) may not be attributed.
-Actual costs must come from Cost Explorer after deployment; none are claimed yet.
+Actual costs must come from Cost Explorer; none are claimed yet (see "After teardown" above for how to read them).
