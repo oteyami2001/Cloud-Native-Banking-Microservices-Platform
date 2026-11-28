@@ -21,7 +21,7 @@ which lags by up to 24 hours.
 
 At the heavier workload assumed below (50,000 API requests per month) the estimate rises
 to about $13 – $18, almost all of it CloudWatch. Restore drills (T29) add cents. The
-$25 budget alert stays active until teardown (T30), which removes all of these charges.
+$25 budget (no e-mail alerts were configured) stayed in place until teardown. T30 ran on 2026-11-28 and removed all of these charges; only the bootstrap S3 buckets remain, at a few cents per month.
 
 
 > **Status: preliminary.** Unit prices below are public on-demand list prices

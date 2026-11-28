@@ -18,9 +18,9 @@ Platform, and Security & Compliance projects).
 |---|---|
 | Design, services, ledger, fraud, events, frontend | ✅ complete; 177 Python + 31 frontend tests pass in CI |
 | Bootstrap (state, artifacts, GitHub OIDC roles) | ✅ applied 2026-11-26 |
-| Dev environment (182 resources via Terraform + GitHub Actions) | ✅ deployed 2026-11-26 |
-| Live validation | ✅ 13 of 30 scenarios proven on the running system; all 30 covered in CI or offline |
-| Teardown (T30) | ⏳ after the demo period |
+| Dev environment (182 resources via Terraform + GitHub Actions) | ✅ deployed 2026-11-26, torn down 2026-11-28 (rebuild: [`scripts/rebuild_from_cloudshell.sh`](scripts/rebuild_from_cloudshell.sh)) |
+| Live validation | ✅ 14 of 30 scenarios proven on the running system; all 30 covered in CI or offline |
+| Teardown (T30) | ✅ 2026-11-28: `cleanup` run [46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662) destroyed all 182 dev resources; verification found none left. Bootstrap kept |
 
 **Case study:** [`docs/case-study.html`](docs/case-study.html) (architecture, live evidence, screenshots) · [final report](docs/phase-reports/final-report.md) · estimated cost ≈ $5.50–9.50/month at demo load ([cost model](docs/cost-model.md)).
 Evidence: [validation register](docs/validation-scenarios.md) · [portfolio evidence log](docs/portfolio-evidence.md).

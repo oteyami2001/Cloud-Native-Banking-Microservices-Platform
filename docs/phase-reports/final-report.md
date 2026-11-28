@@ -11,7 +11,7 @@ by the owner in CloudShell and the browser. Data is synthetic throughout.
 | 8 Dev environment | 182 resources applied from a reviewed, integrity-checked plan |
 | 9 Service delivery | 10 Lambda functions built reproducibly (SBOM, attestations), deployed by alias with per-version health checks and automatic rollback |
 | 10 Frontend | React SPA on private S3 behind CloudFront (OAC), Cognito sign-in with PKCE, silent session renewal, role-based landing |
-| 11 Live validation | 13 of 30 scenarios proven on the running system (list below); all 30 covered by CI or offline tests |
+| 11 Live validation | 14 of 30 scenarios proven on the running system (list below); all 30 covered by CI or offline tests |
 | 12 Portfolio | [Case study](../case-study.html) with screenshots, evidence log, updated cost model |
 
 ## 2. Live validation
@@ -34,9 +34,9 @@ BALANCED). T28 drift detection has a clean baseline only. Details and run IDs:
 
 ## 4. Cost
 Estimated ≈ $5.50–9.50 per month at demo load, mostly CloudWatch alarms and metrics
-([cost model](../cost-model.md)). Not yet confirmed from Cost Explorer. A $25 budget alert is active.
+([cost model](../cost-model.md)). Not yet confirmed from Cost Explorer. The environment was torn down on 2026-11-28 (T30), which stops these charges.
 
 ## 5. Open items
-* T30 teardown: run the `cleanup` workflow, then `scripts/verify_cleanup.sh`, when the demo period ends.
+* T30 done 2026-11-28 ([46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662)). The bootstrap state bucket, artifact bucket and GitHub roles remain, so `scripts/rebuild_from_cloudshell.sh` can redeploy.
 * T28 with a deliberate change, latency measurement, a full restore switch-over, and confirming actual cost.
 * No compliance certification is claimed; this is a synthetic portfolio sandbox.

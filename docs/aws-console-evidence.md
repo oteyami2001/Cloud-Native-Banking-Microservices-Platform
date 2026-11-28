@@ -1,7 +1,8 @@
 # AWS console evidence (dev, us-east-2)
 
 Screenshots of the deployed `novabank-dev` environment, taken in the AWS console on
-2026-11-27, the day after the Terraform apply. They show the resources described in the
+2026-11-27, the day after the Terraform apply. The environment was torn down on
+2026-11-28 (T30), so these resources no longer exist. They show the resources described in the
 [AWS resource inventory](aws-resource-inventory.md). All data shown is synthetic.
 
 ## Compute: AWS Lambda
