@@ -31,7 +31,7 @@ flowchart LR
 | Async | SQS (SSE) with DLQs | `ReportBatchItemFailures` |
 | Evidence | S3 versioned, SSE-KMS, TLS-only | Writers restricted by bucket policy |
 | Ops | CloudWatch EMF metrics, 31 alarms, dashboard, SNS | Low-cardinality dimensions |
-| Cost | AWS Budgets ($25 alert) | Project tag filter |
+| Cost | AWS Budgets ($25 monthly) | Project tag filter; e-mail alerts only when `alert_email` is set (it was not in dev) |
 
 ## Integration constraints identified (Phase 1 review)
 | Topic | Finding | Design response |
@@ -47,6 +47,24 @@ flowchart LR
 | Lambda alias + API integration | Permission must target the qualified alias | `aws_lambda_permission.qualifier = "live"` |
 | DynamoDB restore | Creates a new table without streams/PITR | Runbook includes re-enabling and reconciliation |
 | Lambda in VPC | Would require NAT/endpoints | Not used (ADR-0001) |
+| Teardown of the evidence bucket | A versioned bucket with objects cannot be deleted | `evidence_force_destroy=true` only in the cleanup workflow; the cleanup role is an allowed writer so it can empty the bucket |
+| Teardown of CloudFront | A distribution must be disabled before deletion | Accounts for most of the destroy time (3 min 12 s of 3 min 50 s in T30) |
+| Teardown verification | The cleanup role cannot call `iam:ListRoles` or `tag:GetResources` | `verify_cleanup.sh` reports such checks as NOT CHECKED instead of "none" |
+
+## Lifecycle: two layers
+| Layer | Terraform root | Contents | State |
+|---|---|---|---|
+| Bootstrap | `terraform/bootstrap` (25 resources) | State bucket, artifact bucket, GitHub OIDC roles (plan, apply, deploy, cleanup) | Applied 2026-11-26; **kept** |
+| Dev environment | `terraform/envs/dev` (182 resources) | Everything in the diagram and table above | Applied 2026-11-26; **destroyed 2026-11-28 (T30)** |
+
+The dev layer is disposable by design: the `cleanup` workflow destroys it only after a typed
+confirmation and approval on a protected GitHub environment, and never touches the bootstrap
+layer. T30 ([run 46098404662](https://github.com/oteyami2001/Cloud-Native-Banking-Microservices-Platform/actions/runs/46098404662))
+removed all 182 resources in 3 min 50 s; nothing project-owned is left in the dev layer
+([evidence](aws-console-evidence.md#after-teardown-t30-2026-11-28)). Because the bootstrap
+layer survives, the whole environment can be rebuilt from code with the pipelines or
+`scripts/rebuild_from_cloudshell.sh` ([deployment runbook](deployment-runbook.md)); a rebuild
+gets new API, site and Cognito addresses.
 
 ## Production reference (not deployed)
 Multi-AZ VPC with private subnets, interface endpoints, internal ALB via VPC
